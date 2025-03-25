@@ -25,7 +25,7 @@ export const fetchAdminSettings = async (): Promise<AdminSettings> => {
     .single();
 
   if (error || !data) {
-    // If no settings are set yet, return defaults
+    console.log('No settings found, returning defaults');
     return defaultSettings;
   }
 
@@ -39,7 +39,9 @@ export const fetchAdminSettings = async (): Promise<AdminSettings> => {
 
 // Update admin settings
 export const updateAdminSettings = async (settings: AdminSettings): Promise<boolean> => {
-  const { error } = await supabase
+  console.log('Updating admin settings:', settings);
+  
+  const { data, error } = await supabase
     .from('settings')
     .upsert({ 
       key: 'admin_settings',

@@ -18,7 +18,7 @@ export const fetchProducts = async (): Promise<ProductType[]> => {
     name: product.name_ru,
     nameKz: product.name_kk,
     price: product.price,
-    images: product.images,
+    images: product.images || [],
     category: product.category_id || '',
     description: {
       ru: product.description_ru || '',
@@ -56,6 +56,48 @@ export const fetchCategories = async (): Promise<CategoryType[]> => {
   }));
 };
 
+// Upload image to Supabase Storage
+export const uploadImage = async (file: File): Promise<string | null> => {
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
+    
+    // First, check if the products bucket exists, if not create it
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const productsBucketExists = buckets?.some(bucket => bucket.name === 'products');
+    
+    if (!productsBucketExists) {
+      const { error } = await supabase.storage.createBucket('products', {
+        public: true
+      });
+      
+      if (error) {
+        console.error('Error creating products bucket:', error);
+        throw error;
+      }
+    }
+    
+    // Upload the file
+    const { error, data } = await supabase.storage
+      .from('products')
+      .upload(fileName, file);
+      
+    if (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+    
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('products')
+      .getPublicUrl(fileName);
+      
+    return publicUrl;
+  } catch (error) {
+    console.error('Failed to upload image:', error);
+    return null;
+  }
+};
+
 // Add new product to Supabase
 export const addProduct = async (product: {
   name_ru: string;
@@ -67,6 +109,8 @@ export const addProduct = async (product: {
   images: string[];
   is_popular?: boolean;
 }) => {
+  console.log('Adding product:', product);
+  
   const { data, error } = await supabase
     .from('products')
     .insert(product)
@@ -91,6 +135,8 @@ export const updateProduct = async (id: string, updates: {
   images?: string[];
   is_popular?: boolean;
 }) => {
+  console.log('Updating product:', id, updates);
+  
   const { data, error } = await supabase
     .from('products')
     .update(updates)

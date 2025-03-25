@@ -28,6 +28,8 @@ import AdminProducts from "./pages/Admin/Products";
 import AdminPromotions from "./pages/Admin/Promotions";
 import AdminSettings from "./pages/Admin/Settings";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
+import AddProduct from "./pages/Admin/AddProduct";
+import EditProduct from "./pages/Admin/EditProduct";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,16 @@ const App = () => (
                     <Route path="/admin/products" element={
                       <AdminProtectedRoute>
                         <AdminProducts />
+                      </AdminProtectedRoute>
+                    } />
+                    <Route path="/admin/products/add" element={
+                      <AdminProtectedRoute>
+                        <AddProduct />
+                      </AdminProtectedRoute>
+                    } />
+                    <Route path="/admin/products/edit/:productId" element={
+                      <AdminProtectedRoute>
+                        <EditProduct />
                       </AdminProtectedRoute>
                     } />
                     <Route path="/admin/promotions" element={
