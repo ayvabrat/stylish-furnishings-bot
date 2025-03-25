@@ -1,132 +1,94 @@
 
-interface OrderData {
+const TELEGRAM_BOT_TOKEN = "7298747039:AAHqz3SqQkSyL24b_SYuM0cW9mp7kNeGXo8";
+const TELEGRAM_ADMIN_ID = "7145565433";
+
+interface OrderItem {
+  name: string;
+  price: number;
+  quantity: number;
+  total: number;
+}
+
+interface OrderRequest {
+  orderId: string;
   customerName: string;
-  customerSurname: string;
   customerPhone: string;
   customerEmail: string;
-  customerCity: string;
-  customerStreet: string;
-  customerHouse: string;
-  customerApartment: string;
-  customerComment: string;
-  orderItems: Array<{
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }>;
-  totalPrice: number;
+  deliveryAddress: string;
+  paymentMethod: string;
+  notes: string;
+  items: OrderItem[];
+  subtotal: number;
+  discount: {
+    code: string | null;
+    percentage: number;
+    amount: number;
+  };
+  total: number;
 }
 
-interface PaymentInfo {
-  bankAccount: string;
-  bankName: string;
-  recipientName: string;
-  amount: number;
-  reference: string;
-}
-
-const BOT_TOKEN = '7298747039:AAHqz3SqQkSyL24b_SYuM0cW9mp7kNeGXo8';
-const ADMIN_CHAT_ID = '7145565433';
-
-/**
- * Sends order notification to admin via Telegram bot
- */
-export const sendOrderNotification = async (orderData: OrderData): Promise<boolean> => {
+export const sendOrderToTelegram = async (
+  order: OrderRequest
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Construct order message
-    const itemsList = orderData.orderItems
-      .map(item => `- ${item.name} x${item.quantity} = ${item.price * item.quantity} тг`)
-      .join('\n');
+    // Format items list
+    const itemsList = order.items
+      .map(
+        (item) =>
+          `${item.name} x${item.quantity} - ${item.price.toLocaleString()} тг = ${item.total.toLocaleString()} тг`
+      )
+      .join("\n");
 
+    // Format message
     const message = `
-🛒 *НОВЫЙ ЗАКАЗ!* 🛒
+🛒 *НОВЫЙ ЗАКАЗ*
+🆔 ID заказа: \`${order.orderId}\`
+👤 Имя: ${order.customerName}
+📱 Телефон: ${order.customerPhone}
+📧 Email: ${order.customerEmail}
+🏠 Адрес доставки: ${order.deliveryAddress}
+💳 Способ оплаты: ${order.paymentMethod}
 
-*Данные покупателя:*
-Имя: ${orderData.customerName} ${orderData.customerSurname}
-Телефон: ${orderData.customerPhone}
-Email: ${orderData.customerEmail}
-
-*Адрес доставки:*
-Город: ${orderData.customerCity}
-Улица: ${orderData.customerStreet}
-Дом: ${orderData.customerHouse}
-Квартира: ${orderData.customerApartment}
-
-*Комментарий:* 
-${orderData.customerComment || 'Нет'}
-
-*Заказанные товары:*
+📝 *Товары*:
 ${itemsList}
 
-*Общая сумма:* ${orderData.totalPrice} тг
+💰 *Сумма*: ${order.subtotal.toLocaleString()} тг
+${
+  order.discount.code
+    ? `🏷️ *Скидка*: ${order.discount.code} (${order.discount.percentage}%) - ${order.discount.amount.toLocaleString()} тг`
+    : ""
+}
+💵 *Итого*: ${order.total.toLocaleString()} тг
 
-*ID заказа:* ${generateOrderId()}
+📝 *Примечания*: ${order.notes}
     `;
 
-    const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    const params = new URLSearchParams({
-      chat_id: ADMIN_CHAT_ID,
-      text: message,
-      parse_mode: 'Markdown'
-    });
-
-    const response = await fetch(`${apiUrl}?${params}`);
-    const data = await response.json();
-
-    return data.ok;
-  } catch (error) {
-    console.error('Error sending order notification to Telegram:', error);
-    return false;
-  }
-};
-
-/**
- * Generates a mock payment information from admin (simulates admin response)
- */
-export const generatePaymentInfo = (amount: number): PaymentInfo => {
-  return {
-    bankAccount: 'KZ1234567890123456',
-    bankName: 'Народный Банк Казахстана',
-    recipientName: 'ТОО "ProMebel"',
-    amount: amount,
-    reference: `Оплата заказа ${generateOrderId()}`
-  };
-};
-
-/**
- * Generates a unique order ID
- */
-export const generateOrderId = (): string => {
-  const timestamp = new Date().getTime();
-  const random = Math.floor(Math.random() * 1000);
-  return `ORD-${timestamp}-${random}`;
-};
-
-/**
- * Simulates sending a receipt to admin
- */
-export const sendReceiptToAdmin = async (
-  orderId: string, 
-  receiptImage: File, 
-  customerPhone: string
-): Promise<boolean> => {
-  try {
-    // Create form data for sending image
-    const formData = new FormData();
-    formData.append('chat_id', ADMIN_CHAT_ID);
-    formData.append('photo', receiptImage);
-    formData.append('caption', `📝 Чек для заказа: ${orderId}\n📱 Телефон клиента: ${customerPhone}`);
-
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      method: 'POST',
-      body: formData
-    });
+    // Send message to Telegram
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_ADMIN_ID,
+          text: message,
+          parse_mode: "Markdown",
+        }),
+      }
+    );
 
     const data = await response.json();
-    return data.ok;
+
+    if (!data.ok) {
+      console.error("Telegram API error:", data);
+      return { success: false, error: data.description };
+    }
+
+    return { success: true };
   } catch (error) {
-    console.error('Error sending receipt to admin:', error);
-    return false;
+    console.error("Error sending message to Telegram:", error);
+    return { success: false, error: "Failed to send message to Telegram" };
   }
 };
