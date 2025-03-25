@@ -99,3 +99,9 @@ export const getOrderDetails = async (orderId: string) => {
     return null;
   }
 };
+
+// Get allowed payment methods
+export const getAllowedPaymentMethods = () => {
+  // Return only bank transfer as a payment method, cash payments disabled
+  return ['bank_transfer'];
+};

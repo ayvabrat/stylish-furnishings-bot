@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Facebook, Instagram, Youtube } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Logo from './Logo';
 
@@ -13,24 +13,13 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-furniture-light border-t">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Company info */}
           <div className="space-y-4">
             <Logo />
             <p className="text-furniture-secondary text-sm mt-4">
               ProMebel.shop - {t('footer.companyName')}
             </p>
-            <div className="flex space-x-4 mt-4">
-              <a href="#" className="text-furniture-primary hover:text-furniture-secondary transition-colors">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="text-furniture-primary hover:text-furniture-secondary transition-colors">
-                <Instagram size={20} />
-              </a>
-              <a href="#" className="text-furniture-primary hover:text-furniture-secondary transition-colors">
-                <Youtube size={20} />
-              </a>
-            </div>
           </div>
 
           {/* Navigation */}
@@ -78,30 +67,6 @@ const Footer: React.FC = () => {
                 <Link to="/delivery" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
                   {t('nav.delivery')}
                 </Link>
-              </li>
-              <li>
-                <Link to="/contacts" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
-                  {t('nav.contacts')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="text-furniture-primary font-medium mb-4">{t('nav.contacts')}</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <MapPin size={18} className="text-furniture-primary mr-2 mt-1" />
-                <span className="text-furniture-secondary text-sm">{t('footer.address')}</span>
-              </li>
-              <li className="flex items-center">
-                <Phone size={18} className="text-furniture-primary mr-2" />
-                <span className="text-furniture-secondary text-sm">{t('footer.phone')}</span>
-              </li>
-              <li className="flex items-center">
-                <Mail size={18} className="text-furniture-primary mr-2" />
-                <span className="text-furniture-secondary text-sm">{t('footer.email')}</span>
               </li>
             </ul>
           </div>

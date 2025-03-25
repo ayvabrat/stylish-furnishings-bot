@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Tag, Settings, CreditCard } from 'lucide-react';
+import { Package, Tag, Settings } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -27,18 +27,10 @@ const AdminDashboard = () => {
       link: '/admin/promotions',
     },
     {
-      title: language === 'ru' ? 'Настройки оплаты' : 'Төлем параметрлері',
+      title: language === 'ru' ? 'Настройки' : 'Параметрлер',
       description: language === 'ru' 
-        ? 'Настройка реквизитов для оплаты' 
-        : 'Төлем деректемелерін орнату',
-      icon: <CreditCard className="h-8 w-8 text-furniture-primary" />,
-      link: '/admin/payment-settings',
-    },
-    {
-      title: language === 'ru' ? 'Общие настройки' : 'Жалпы параметрлер',
-      description: language === 'ru' 
-        ? 'Настройка контактной информации и других параметров' 
-        : 'Байланыс ақпаратын және басқа параметрлерді орнату',
+        ? 'Настройка контактной информации и реквизитов' 
+        : 'Байланыс ақпараты мен деректемелерді орнату',
       icon: <Settings className="h-8 w-8 text-furniture-primary" />,
       link: '/admin/settings',
     },
@@ -53,7 +45,7 @@ const AdminDashboard = () => {
               {language === 'ru' ? 'Панель администратора' : 'Әкімші тақтасы'}
             </h1>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {dashboardItems.map((item, index) => (
                 <Link 
                   key={index} 

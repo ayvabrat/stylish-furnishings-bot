@@ -1,6 +1,6 @@
 
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -18,7 +18,6 @@ import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import About from "./pages/About";
 import Delivery from "./pages/Delivery";
-import Contacts from "./pages/Contacts";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -49,7 +48,6 @@ const App = () => (
                   <Route path="/checkout/success" element={<CheckoutSuccess />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/delivery" element={<Delivery />} />
-                  <Route path="/contacts" element={<Contacts />} />
                   
                   {/* Admin Routes */}
                   <Route path="/admin" element={<AdminDashboard />} />
