@@ -24,6 +24,7 @@ import { useCart } from '@/contexts/CartContext';
 import { usePromotion } from '@/contexts/PromotionContext';
 import { sendOrderToTelegram } from '@/services/telegramService';
 import { supabase } from '@/integrations/supabase/client';
+import { getAllowedPaymentMethods } from '@/services/orderService';
 
 // Define validation schema based on language
 const getCheckoutSchema = (language: 'ru' | 'kz') => {
@@ -56,7 +57,6 @@ const getCheckoutSchema = (language: 'ru' | 'kz') => {
         : 'Мекенжай кемінде 5 таңбадан тұруы керек',
     }),
     postalCode: z.string().optional(),
-    paymentMethod: z.enum(['card', 'cash']),
     notes: z.string().optional(),
   });
 };
@@ -79,6 +79,9 @@ const Checkout = () => {
     recipientName: string;
   } | null>(null);
   
+  // Get allowed payment methods
+  const allowedPaymentMethods = getAllowedPaymentMethods();
+  
   // Create form with validation schema
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(getCheckoutSchema(language)),
@@ -89,7 +92,6 @@ const Checkout = () => {
       city: '',
       address: '',
       postalCode: '',
-      paymentMethod: 'card',
       notes: '',
     },
   });
@@ -138,7 +140,7 @@ const Checkout = () => {
         city: data.city,
         delivery_address: data.address,
         postal_code: data.postalCode || null,
-        payment_method: data.paymentMethod,
+        payment_method: 'card', // Only card payment is allowed
         additional_notes: data.notes || null,
         total_amount: finalPrice,
         status: 'pending',
@@ -179,9 +181,7 @@ const Checkout = () => {
         customerPhone: data.phone,
         customerEmail: data.email || 'Не указан',
         deliveryAddress: `${data.city}, ${data.address}${data.postalCode ? `, ${data.postalCode}` : ''}`,
-        paymentMethod: data.paymentMethod === 'card' 
-          ? (language === 'ru' ? 'Банковская карта' : 'Банк картасы') 
-          : (language === 'ru' ? 'Наличные' : 'Қолма-қол ақша'),
+        paymentMethod: language === 'ru' ? 'Банковская карта' : 'Банк картасы',
         notes: data.notes || (language === 'ru' ? 'Нет примечаний' : 'Ескертулер жоқ'),
         items: items.map(item => ({
           name: language === 'ru' ? item.name : (item.nameKz || item.name),
@@ -205,45 +205,38 @@ const Checkout = () => {
         return;
       }
       
-      // If payment method is card, fetch payment details and wait for payment
-      if (data.paymentMethod === 'card') {
-        // Fetch payment details from Supabase
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('settings')
-          .select('*')
-          .eq('key', 'admin_settings')
-          .single();
-        
-        if (settingsError || !settingsData) {
-          console.error('Failed to fetch payment details:', settingsError);
-          // Use default payment details if settings not found
+      // Fetch payment details from Supabase
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'admin_settings')
+        .single();
+      
+      if (settingsError || !settingsData) {
+        console.error('Failed to fetch payment details:', settingsError);
+        // Use default payment details if settings not found
+        setPaymentDetails({
+          bankName: 'Казкоммерцбанк',
+          accountNumber: 'KZ123456789012345678',
+          recipientName: 'ТОО "ProMebel"'
+        });
+      } else {
+        try {
+          const adminSettings = JSON.parse(settingsData.value);
+          setPaymentDetails(adminSettings.paymentDetails);
+        } catch (e) {
+          console.error('Error parsing admin settings:', e);
+          // Use default payment details if parsing fails
           setPaymentDetails({
             bankName: 'Казкоммерцбанк',
             accountNumber: 'KZ123456789012345678',
             recipientName: 'ТОО "ProMebel"'
           });
-        } else {
-          try {
-            const adminSettings = JSON.parse(settingsData.value);
-            setPaymentDetails(adminSettings.paymentDetails);
-          } catch (e) {
-            console.error('Error parsing admin settings:', e);
-            // Use default payment details if parsing fails
-            setPaymentDetails({
-              bankName: 'Казкоммерцбанк',
-              accountNumber: 'KZ123456789012345678',
-              recipientName: 'ТОО "ProMebel"'
-            });
-          }
         }
-        
-        setIsWaitingForPayment(true);
-        setIsSubmitting(false);
-      } else {
-        // If payment method is cash, go to success page
-        clearCart();
-        navigate('/checkout/success');
       }
+      
+      setIsWaitingForPayment(true);
+      setIsSubmitting(false);
     } catch (error) {
       console.error('Error during checkout:', error);
       toast.error(language === 'ru' ? 'Произошла ошибка при оформлении заказа' : 'Тапсырысты рәсімдеу кезінде қате орын алды');
@@ -499,59 +492,21 @@ const Checkout = () => {
                             {language === 'ru' ? 'Способ оплаты' : 'Төлем әдісі'}
                           </h3>
                           
-                          <FormField
-                            control={form.control}
-                            name="paymentMethod"
-                            render={({ field }) => (
-                              <FormItem className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div 
-                                    className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer transition-all ${
-                                      field.value === 'card' 
-                                        ? 'border-furniture-primary bg-furniture-light/30' 
-                                        : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                    onClick={() => form.setValue('paymentMethod', 'card')}
-                                  >
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-2 ${
-                                      field.value === 'card' 
-                                        ? 'border-furniture-primary' 
-                                        : 'border-gray-300'
-                                    }`}>
-                                      {field.value === 'card' && (
-                                        <div className="w-3 h-3 rounded-full bg-furniture-primary"></div>
-                                      )}
-                                    </div>
-                                    <span className="text-center">
-                                      {language === 'ru' ? 'Банковская карта' : 'Банк картасы'}
-                                    </span>
-                                  </div>
-                                  
-                                  <div 
-                                    className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer transition-all ${
-                                      field.value === 'cash' 
-                                        ? 'border-furniture-primary bg-furniture-light/30' 
-                                        : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                    onClick={() => form.setValue('paymentMethod', 'cash')}
-                                  >
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-2 ${
-                                      field.value === 'cash' 
-                                        ? 'border-furniture-primary' 
-                                        : 'border-gray-300'
-                                    }`}>
-                                      {field.value === 'cash' && (
-                                        <div className="w-3 h-3 rounded-full bg-furniture-primary"></div>
-                                      )}
-                                    </div>
-                                    <span className="text-center">
-                                      {language === 'ru' ? 'Наличные' : 'Қолма-қол ақша'}
-                                    </span>
-                                  </div>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
+                          <div className="bg-furniture-light/50 rounded-lg p-4">
+                            <div className="flex items-center">
+                              <div className="w-6 h-6 rounded-full border-2 border-furniture-primary flex items-center justify-center mr-3">
+                                <div className="w-3 h-3 rounded-full bg-furniture-primary"></div>
+                              </div>
+                              <span className="font-medium">
+                                {language === 'ru' ? 'Банковская карта' : 'Банк картасы'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-furniture-secondary mt-2 pl-9">
+                              {language === 'ru' 
+                                ? 'После оформления заказа вы получите реквизиты для оплаты' 
+                                : 'Тапсырысты рәсімдегеннен кейін сіз төлем деректемелерін аласыз'}
+                            </p>
+                          </div>
                         </div>
                         
                         {/* Additional Notes */}

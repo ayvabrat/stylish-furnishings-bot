@@ -1,12 +1,15 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Tag, Settings } from 'lucide-react';
+import { Package, Tag, Settings, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAdmin } from '@/contexts/AdminContext';
 
 const AdminDashboard = () => {
   const { language } = useLanguage();
+  const { logout } = useAdmin();
   
   // Dashboard items
   const dashboardItems = [
@@ -41,9 +44,15 @@ const AdminDashboard = () => {
       <div className="bg-white py-10 md:py-16">
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-screen-xl mx-auto">
-            <h1 className="text-2xl md:text-3xl font-bold mb-6">
-              {language === 'ru' ? 'Панель администратора' : 'Әкімші тақтасы'}
-            </h1>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold">
+                {language === 'ru' ? 'Панель администратора' : 'Әкімші тақтасы'}
+              </h1>
+              <Button variant="outline" onClick={logout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                {language === 'ru' ? 'Выйти' : 'Шығу'}
+              </Button>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {dashboardItems.map((item, index) => (

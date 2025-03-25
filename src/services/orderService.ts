@@ -29,6 +29,7 @@ export const sendPaymentDetails = async (telegramPayload: {
       
     if (updateError) {
       console.error('Error updating order status:', updateError);
+      return { success: false, error: updateError.message };
     }
     
     // Here you would implement the actual logic to send the payment details
@@ -103,5 +104,5 @@ export const getOrderDetails = async (orderId: string) => {
 // Get allowed payment methods
 export const getAllowedPaymentMethods = () => {
   // Return only bank transfer as a payment method, cash payments disabled
-  return ['bank_transfer'];
+  return ['card'];
 };

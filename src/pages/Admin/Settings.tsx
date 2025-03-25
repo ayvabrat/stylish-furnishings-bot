@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,11 +9,22 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchAdminSettings, updateAdminSettings } from '@/services/adminService';
+import { saveTelegramSettings } from '@/services/telegramService';
+import { useAdmin } from '@/contexts/AdminContext';
+import { supabase } from '@/integrations/supabase/client';
 import type { AdminSettings } from '@/types/admin';
 
-const AdminSettings = () => {
+const AdminSettingsPage = () => {
   const { language } = useLanguage();
+  const { logout } = useAdmin();
   const [settings, setSettings] = useState<AdminSettings | null>(null);
+  const [telegramSettings, setTelegramSettings] = useState<{
+    botToken: string;
+    adminId: string;
+  }>({
+    botToken: "",
+    adminId: ""
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -22,6 +33,25 @@ const AdminSettings = () => {
       try {
         const data = await fetchAdminSettings();
         setSettings(data);
+        
+        // Load Telegram settings
+        const { data: telegramData, error } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'telegram_settings')
+          .single();
+          
+        if (!error && telegramData) {
+          try {
+            const parsedSettings = JSON.parse(telegramData.value);
+            setTelegramSettings({
+              botToken: parsedSettings.botToken || "",
+              adminId: parsedSettings.adminId || ""
+            });
+          } catch (e) {
+            console.error('Error parsing Telegram settings:', e);
+          }
+        }
       } catch (error) {
         console.error('Failed to load settings:', error);
         toast.error(language === 'ru' ? 'Ошибка при загрузке настроек' : 'Параметрлерді жүктеу қатесі');
@@ -57,12 +87,24 @@ const AdminSettings = () => {
     });
   };
   
+  const handleTelegramChange = (field: 'botToken' | 'adminId', value: string) => {
+    setTelegramSettings({
+      ...telegramSettings,
+      [field]: value
+    });
+  };
+  
   const handleSaveSettings = async () => {
     if (!settings) return;
     
     setIsSaving(true);
     try {
+      // Save admin settings
       await updateAdminSettings(settings);
+      
+      // Save Telegram settings
+      await saveTelegramSettings(telegramSettings.botToken, telegramSettings.adminId);
+      
       toast.success(language === 'ru' ? 'Настройки успешно сохранены' : 'Параметрлер сәтті сақталды');
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -112,13 +154,19 @@ const AdminSettings = () => {
       <div className="bg-white py-10 md:py-16">
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-screen-xl mx-auto">
-            <div className="flex items-center mb-6">
-              <Link to="/admin" className="mr-4">
-                <ArrowLeft className="h-5 w-5 text-furniture-secondary hover:text-furniture-primary" />
-              </Link>
-              <h1 className="text-2xl md:text-3xl font-bold">
-                {language === 'ru' ? 'Настройки' : 'Параметрлер'}
-              </h1>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <Link to="/admin" className="mr-4">
+                  <ArrowLeft className="h-5 w-5 text-furniture-secondary hover:text-furniture-primary" />
+                </Link>
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  {language === 'ru' ? 'Настройки' : 'Параметрлер'}
+                </h1>
+              </div>
+              <Button variant="outline" onClick={logout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                {language === 'ru' ? 'Выйти' : 'Шығу'}
+              </Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -205,6 +253,48 @@ const AdminSettings = () => {
                   </div>
                 </div>
               </div>
+              
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold mb-4">
+                  {language === 'ru' ? 'Настройки Telegram' : 'Telegram параметрлері'}
+                </h2>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="bot-token" className="text-sm font-medium">
+                      {language === 'ru' ? 'Токен бота' : 'Бот токені'}
+                    </label>
+                    <Input
+                      id="bot-token"
+                      value={telegramSettings.botToken}
+                      onChange={(e) => handleTelegramChange('botToken', e.target.value)}
+                      placeholder="123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'ru' 
+                        ? 'Получить токен можно у @BotFather в Telegram' 
+                        : 'Токенді Telegram-дағы @BotFather-ден алуға болады'}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="admin-id" className="text-sm font-medium">
+                      {language === 'ru' ? 'ID администратора' : 'Әкімші ID'}
+                    </label>
+                    <Input
+                      id="admin-id"
+                      value={telegramSettings.adminId}
+                      onChange={(e) => handleTelegramChange('adminId', e.target.value)}
+                      placeholder="123456789"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'ru' 
+                        ? 'Получить ID можно у @userinfobot в Telegram' 
+                        : 'ID-ді Telegram-дағы @userinfobot-тан алуға болады'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="mt-8 flex justify-end">
@@ -229,4 +319,4 @@ const AdminSettings = () => {
   );
 };
 
-export default AdminSettings;
+export default AdminSettingsPage;
