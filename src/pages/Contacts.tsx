@@ -5,7 +5,7 @@ import { Phone, Mail, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 

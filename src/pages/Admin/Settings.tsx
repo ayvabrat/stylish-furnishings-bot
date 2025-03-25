@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -9,7 +8,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchAdminSettings, updateAdminSettings } from '@/services/adminService';
-import { AdminSettings } from '@/types/admin';
+import type { AdminSettings } from '@/types/admin';
 
 const AdminSettings = () => {
   const { language } = useLanguage();
@@ -17,7 +16,6 @@ const AdminSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Load settings
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -34,7 +32,6 @@ const AdminSettings = () => {
     loadSettings();
   }, [language]);
   
-  // Handle payment details change
   const handlePaymentChange = (field: keyof AdminSettings['paymentDetails'], value: string) => {
     if (!settings) return;
     
@@ -47,7 +44,6 @@ const AdminSettings = () => {
     });
   };
   
-  // Handle contact info change
   const handleContactChange = (field: keyof AdminSettings['contactInfo'], value: string) => {
     if (!settings) return;
     
@@ -60,7 +56,6 @@ const AdminSettings = () => {
     });
   };
   
-  // Handle save settings
   const handleSaveSettings = async () => {
     if (!settings) return;
     
@@ -116,7 +111,6 @@ const AdminSettings = () => {
       <div className="bg-white py-10 md:py-16">
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-screen-xl mx-auto">
-            {/* Header */}
             <div className="flex items-center mb-6">
               <Link to="/admin" className="mr-4">
                 <ArrowLeft className="h-5 w-5 text-furniture-secondary hover:text-furniture-primary" />
@@ -127,7 +121,6 @@ const AdminSettings = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Payment Details */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
                 <h2 className="text-xl font-semibold mb-4">
                   {language === 'ru' ? 'Реквизиты для оплаты' : 'Төлем деректемелері'}
@@ -169,7 +162,6 @@ const AdminSettings = () => {
                 </div>
               </div>
               
-              {/* Contact Information */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
                 <h2 className="text-xl font-semibold mb-4">
                   {language === 'ru' ? 'Контактная информация' : 'Байланыс ақпараты'}
@@ -214,7 +206,6 @@ const AdminSettings = () => {
               </div>
             </div>
             
-            {/* Save Button */}
             <div className="mt-8 flex justify-end">
               <Button onClick={handleSaveSettings} disabled={isSaving}>
                 {isSaving ? (
