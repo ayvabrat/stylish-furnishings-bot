@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ProductType, CategoryType } from '@/types/product';
 
@@ -10,6 +9,74 @@ export const fetchProducts = async (): Promise<ProductType[]> => {
 
   if (error) {
     console.error('Error fetching products:', error);
+    throw error;
+  }
+
+  return data.map(product => ({
+    id: product.id,
+    name: product.name_ru,
+    nameKz: product.name_kk,
+    price: product.price,
+    images: product.images || [],
+    category: product.category_id || '',
+    description: {
+      ru: product.description_ru || '',
+      kz: product.description_kk || ''
+    },
+    characteristics: {
+      dimensions: '',
+      material: '',
+      color: ''
+    },
+    inStock: true,
+    isPopular: product.is_popular || false
+  }));
+};
+
+// Fetch popular products from Supabase
+export const fetchPopularProducts = async (limit: number = 8): Promise<ProductType[]> => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_popular', true)
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching popular products:', error);
+    throw error;
+  }
+
+  return data.map(product => ({
+    id: product.id,
+    name: product.name_ru,
+    nameKz: product.name_kk,
+    price: product.price,
+    images: product.images || [],
+    category: product.category_id || '',
+    description: {
+      ru: product.description_ru || '',
+      kz: product.description_kk || ''
+    },
+    characteristics: {
+      dimensions: '',
+      material: '',
+      color: ''
+    },
+    inStock: true,
+    isPopular: product.is_popular || false
+  }));
+};
+
+// Fetch new products from Supabase
+export const fetchNewProducts = async (limit: number = 8): Promise<ProductType[]> => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_new', true)
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching new products:', error);
     throw error;
   }
 

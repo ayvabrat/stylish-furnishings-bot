@@ -17,7 +17,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Check for existing admin session on mount
   useEffect(() => {
-    const adminAuth = loadFromLocalStorage('admin_auth', false);
+    const adminAuth = loadFromLocalStorage<boolean>('admin_auth', false);
     if (adminAuth === true) {
       setIsAuthenticated(true);
     }
