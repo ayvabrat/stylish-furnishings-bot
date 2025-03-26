@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -15,10 +14,9 @@ import { useCart } from '@/contexts/CartContext';
 import { usePromotion } from '@/contexts/PromotionContext';
 import { createOrder } from '@/services/orderService';
 import { fetchAdminSettings } from '@/services/adminService';
-import { sendTelegramNotification } from '@/services/telegramService';
+import { formatPrice } from '@/lib/utils';
 import PromoCodeInput from '@/components/PromoCodeInput';
 import { AdminSettings } from '@/types/admin';
-import { formatPrice } from '@/lib/utils';
 
 const CheckoutPage = () => {
   const { language } = useLanguage();
@@ -118,26 +116,26 @@ const CheckoutPage = () => {
     try {
       // Create order items from cart items
       const orderItems = items.map(item => ({
-        product_id: item.id,
-        product_name: language === 'ru' ? item.name : item.nameKz,
+        productId: item.id,
+        productName: language === 'ru' ? item.name : item.nameKz,
         quantity: item.quantity,
         price: item.price
       }));
       
       // Create order
       const orderData = {
-        customer_name: name,
-        customer_phone: phone,
-        customer_email: email || null,
+        customerName: name,
+        customerPhone: phone,
+        customerEmail: email || null,
         city,
-        delivery_address: address,
-        postal_code: postalCode || null,
-        payment_method: paymentMethod,
-        additional_notes: additionalNotes || null,
-        total_amount: total,
+        deliveryAddress: address,
+        postalCode: postalCode || null,
+        paymentMethod: paymentMethod,
+        additionalNotes: additionalNotes || null,
+        totalAmount: total,
         items: orderItems,
-        promo_code: activePromotion?.code || null,
-        discount_amount: discountAmount || 0
+        promoCode: activePromotion?.code || null,
+        discountAmount: discountAmount || 0
       };
       
       console.log('Submitting order:', orderData);
@@ -146,24 +144,6 @@ const CheckoutPage = () => {
       const orderId = await createOrder(orderData);
       
       console.log('Order created with ID:', orderId);
-      
-      // Send notification via Telegram if enabled
-      try {
-        await sendTelegramNotification({
-          orderNumber: orderId.substring(0, 8),
-          customerName: name,
-          customerPhone: phone,
-          totalAmount: total,
-          items: items.map(item => ({
-            name: language === 'ru' ? item.name : item.nameKz,
-            quantity: item.quantity,
-            price: item.price
-          }))
-        });
-      } catch (telegramError) {
-        console.error('Failed to send Telegram notification:', telegramError);
-        // Continue with order process even if Telegram notification fails
-      }
       
       // Clear cart and redirect to success page
       clearCart();

@@ -15,6 +15,7 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  calculateSubtotal: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -42,11 +43,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex].quantity += 1;
         
-        toast.success('Товар добавлен в корзину');
+        toast.success('Товар добавлен в корзину', {
+          duration: 1000
+        });
         return updatedItems;
       } else {
         // Add new item with quantity 1
-        toast.success('Товар добавлен в корзину');
+        toast.success('Товар добавлен в корзину', {
+          duration: 1000
+        });
         return [...prevItems, { ...product, quantity: 1 }];
       }
     });
@@ -55,7 +60,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Remove item from cart
   const removeItem = (productId: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== productId));
-    toast.info('Товар удален из корзины');
+    toast.info('Товар удален из корзины', {
+      duration: 1000
+    });
   };
 
   // Update item quantity
@@ -74,9 +81,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setItems([]);
   };
 
+  // Calculate subtotal
+  const calculateSubtotal = () => {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
   // Calculate total items and price
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
-  const totalPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const totalPrice = calculateSubtotal();
 
   return (
     <CartContext.Provider 
@@ -87,7 +99,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateQuantity, 
         clearCart, 
         totalItems, 
-        totalPrice 
+        totalPrice,
+        calculateSubtotal
       }}
     >
       {children}
