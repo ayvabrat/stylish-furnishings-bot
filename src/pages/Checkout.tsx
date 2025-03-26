@@ -16,10 +16,10 @@ import PromoCodeInput from '@/components/PromoCodeInput';
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const { cart, totalPrice, clearCart } = useCart();
+  const { cartItems, totalPrice, clearCart } = useCart();
   const { promoCode, discountPercentage } = usePromotion();
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'transfer' | 'cash'>('transfer');
+  const [paymentMethod, setPaymentMethod] = useState<'transfer'>('transfer');
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -57,10 +57,10 @@ const CheckoutPage = () => {
     loadPaymentDetails();
     
     // Redirect to home if cart is empty
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
       navigate('/');
     }
-  }, [cart.length, navigate]);
+  }, [cartItems.length, navigate]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -72,14 +72,18 @@ const CheckoutPage = () => {
     
     // Validate form
     if (!formData.name || !formData.phone || !formData.city || !formData.address) {
-      toast.error(language === 'ru' ? 'Пожалуйста, заполните все обязательные поля' : 'Барлық міндетті өрістерді толтырыңыз');
+      toast.error(language === 'ru' ? 'Пожалуйста, заполните все обязательные поля' : 'Барлық міндетті өрістерді толтырыңыз', {
+        duration: 1000
+      });
       return;
     }
     
     // Phone number validation
     const phoneRegex = /^\+?[0-9]{10,15}$/;
     if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      toast.error(language === 'ru' ? 'Пожалуйста, введите корректный номер телефона' : 'Дұрыс телефон нөмірін енгізіңіз');
+      toast.error(language === 'ru' ? 'Пожалуйста, введите корректный номер телефона' : 'Дұрыс телефон нөмірін енгізіңіз', {
+        duration: 1000
+      });
       return;
     }
     
@@ -87,7 +91,9 @@ const CheckoutPage = () => {
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        toast.error(language === 'ru' ? 'Пожалуйста, введите корректный email' : 'Дұрыс email енгізіңіз');
+        toast.error(language === 'ru' ? 'Пожалуйста, введите корректный email' : 'Дұрыс email енгізіңіз', {
+          duration: 1000
+        });
         return;
       }
     }
@@ -106,7 +112,7 @@ const CheckoutPage = () => {
         additionalNotes: formData.notes || null,
         paymentMethod: paymentMethod,
         totalAmount: finalPrice,
-        items: cart.map(item => ({
+        items: cartItems.map(item => ({
           productId: item.id,
           productName: language === 'ru' ? item.name : (item.nameKz || item.name),
           price: item.price,
@@ -134,7 +140,8 @@ const CheckoutPage = () => {
       toast.error(
         language === 'ru' 
           ? 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз.' 
-          : 'Тапсырысты рәсімдеу кезінде қате пайда болды. Қайталап көріңіз.'
+          : 'Тапсырысты рәсімдеу кезінде қате пайда болды. Қайталап көріңіз.',
+        { duration: 1000 }
       );
     } finally {
       setIsLoading(false);

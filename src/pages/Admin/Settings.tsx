@@ -17,7 +17,19 @@ import type { AdminSettings } from '@/types/admin';
 const AdminSettingsPage = () => {
   const { language } = useLanguage();
   const { logout } = useAdmin();
-  const [settings, setSettings] = useState<AdminSettings | null>(null);
+  const [settings, setSettings] = useState<AdminSettings>({
+    paymentDetails: {
+      bankName: '',
+      accountNumber: '',
+      recipientName: ''
+    },
+    contactInfo: {
+      phone: '',
+      email: '',
+      address: ''
+    }
+  });
+  
   const [telegramSettings, setTelegramSettings] = useState<{
     botToken: string;
     adminId: string;
@@ -25,6 +37,7 @@ const AdminSettingsPage = () => {
     botToken: "",
     adminId: ""
   });
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -32,7 +45,9 @@ const AdminSettingsPage = () => {
     const loadSettings = async () => {
       try {
         const data = await fetchAdminSettings();
-        setSettings(data);
+        if (data) {
+          setSettings(data);
+        }
         
         // Load Telegram settings
         const { data: telegramData, error } = await supabase
@@ -54,7 +69,9 @@ const AdminSettingsPage = () => {
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
-        toast.error(language === 'ru' ? 'Ошибка при загрузке настроек' : 'Параметрлерді жүктеу қатесі');
+        toast.error(language === 'ru' ? 'Ошибка при загрузке настроек' : 'Параметрлерді жүктеу қатесі', {
+          duration: 1000
+        });
       } finally {
         setIsLoading(false);
       }
@@ -64,8 +81,6 @@ const AdminSettingsPage = () => {
   }, [language]);
   
   const handlePaymentChange = (field: keyof AdminSettings['paymentDetails'], value: string) => {
-    if (!settings) return;
-    
     setSettings({
       ...settings,
       paymentDetails: {
@@ -76,8 +91,6 @@ const AdminSettingsPage = () => {
   };
   
   const handleContactChange = (field: keyof AdminSettings['contactInfo'], value: string) => {
-    if (!settings) return;
-    
     setSettings({
       ...settings,
       contactInfo: {
@@ -95,20 +108,28 @@ const AdminSettingsPage = () => {
   };
   
   const handleSaveSettings = async () => {
-    if (!settings) return;
-    
     setIsSaving(true);
     try {
+      console.log('Saving settings:', settings);
+      
       // Save admin settings
-      await updateAdminSettings(settings);
+      const adminSettingsResult = await updateAdminSettings(settings);
       
       // Save Telegram settings
-      await saveTelegramSettings(telegramSettings.botToken, telegramSettings.adminId);
+      const telegramSettingsResult = await saveTelegramSettings(telegramSettings.botToken, telegramSettings.adminId);
       
-      toast.success(language === 'ru' ? 'Настройки успешно сохранены' : 'Параметрлер сәтті сақталды');
+      if (adminSettingsResult && telegramSettingsResult) {
+        toast.success(language === 'ru' ? 'Настройки успешно сохранены' : 'Параметрлер сәтті сақталды', {
+          duration: 1000
+        });
+      } else {
+        throw new Error('Failed to save settings');
+      }
     } catch (error) {
       console.error('Failed to save settings:', error);
-      toast.error(language === 'ru' ? 'Ошибка при сохранении настроек' : 'Параметрлерді сақтау қатесі');
+      toast.error(language === 'ru' ? 'Ошибка при сохранении настроек' : 'Параметрлерді сақтау қатесі', {
+        duration: 1000
+      });
     } finally {
       setIsSaving(false);
     }
@@ -123,24 +144,6 @@ const AdminSettingsPage = () => {
               <div className="p-6 text-center">
                 <div className="animate-spin h-8 w-8 border-4 border-furniture-primary border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p>{language === 'ru' ? 'Загрузка настроек...' : 'Параметрлер жүктелуде...'}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-  
-  if (!settings) {
-    return (
-      <Layout>
-        <div className="bg-white py-10 md:py-16">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="max-w-screen-xl mx-auto">
-              <div className="p-6 text-center">
-                <p className="text-furniture-secondary">
-                  {language === 'ru' ? 'Не удалось загрузить настройки' : 'Параметрлерді жүктеу мүмкін болмады'}
-                </p>
               </div>
             </div>
           </div>

@@ -1,108 +1,95 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { sendOrderToTelegram } from '@/services/telegramService';
+import { toast } from 'sonner';
+import { sendOrderNotification } from '@/services/telegramService';
 
-// Define PaymentResponse type
-interface PaymentResponse {
-  orderId: string;
-  bankName: string;
-  accountNumber: string;
-  recipientName: string;
-}
-
-// Send payment details to the customer
-export const sendPaymentDetails = async (telegramPayload: {
-  orderId: string;
-  payment: {
-    bankName: string;
-    accountNumber: string;
-    recipientName: string;
-  };
-  orderDetails: string;
-}): Promise<{ success: boolean; error?: string }> => {
+// Create a new order
+export const createOrder = async (orderData: {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  city: string;
+  deliveryAddress: string;
+  postalCode: string | null;
+  additionalNotes: string | null;
+  paymentMethod: string;
+  totalAmount: number;
+  items: {
+    productId: string;
+    productName: string;
+    price: number;
+    quantity: number;
+  }[];
+  discountApplied: boolean;
+  promoCode: string | null;
+  discountAmount: number;
+}) => {
+  console.log('Creating order with data:', orderData);
+  
   try {
-    // Update order status in Supabase
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({ status: 'awaiting_payment' })
-      .eq('id', telegramPayload.orderId);
-      
-    if (updateError) {
-      console.error('Error updating order status:', updateError);
-      return { success: false, error: updateError.message };
-    }
-    
-    // Here you would implement the actual logic to send the payment details
-    // to the customer via the Telegram bot
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error sending payment details:', error);
-    return { success: false, error: 'Failed to send payment details' };
-  }
-};
-
-// Update order status
-export const updateOrderStatus = async (
-  orderId: string,
-  status: 'pending' | 'awaiting_payment' | 'paid' | 'completed' | 'cancelled'
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status })
-      .eq('id', orderId);
-      
-    if (error) {
-      console.error('Error updating order status:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error updating order status:', error);
-    return false;
-  }
-};
-
-// Get order details
-export const getOrderDetails = async (orderId: string) => {
-  try {
-    // Get order data
+    // First, create the order record
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('*')
-      .eq('id', orderId)
+      .insert({
+        customer_name: orderData.customerName,
+        customer_phone: orderData.customerPhone,
+        customer_email: orderData.customerEmail,
+        city: orderData.city,
+        delivery_address: orderData.deliveryAddress,
+        postal_code: orderData.postalCode,
+        additional_notes: orderData.additionalNotes,
+        payment_method: orderData.paymentMethod,
+        total_amount: orderData.totalAmount,
+        status: 'pending'
+      })
+      .select()
       .single();
       
-    if (orderError || !order) {
-      console.error('Error fetching order:', orderError);
-      return null;
+    if (orderError) {
+      console.error('Error creating order:', orderError);
+      throw new Error(orderError.message);
     }
     
-    // Get order items
-    const { data: orderItems, error: itemsError } = await supabase
+    if (!order) {
+      throw new Error('Failed to create order');
+    }
+    
+    // Then, create order items
+    const orderItems = orderData.items.map(item => ({
+      order_id: order.id,
+      product_id: item.productId,
+      product_name: item.productName,
+      price: item.price,
+      quantity: item.quantity
+    }));
+    
+    const { error: itemsError } = await supabase
       .from('order_items')
-      .select('*')
-      .eq('order_id', orderId);
+      .insert(orderItems);
       
     if (itemsError) {
-      console.error('Error fetching order items:', itemsError);
-      return null;
+      console.error('Error creating order items:', itemsError);
+      throw new Error(itemsError.message);
     }
     
-    return {
-      order,
-      items: orderItems || []
-    };
+    // Send order notification to Telegram if function exists
+    try {
+      await sendOrderNotification({
+        orderId: order.id,
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
+        totalAmount: orderData.totalAmount,
+        items: orderData.items,
+        promoCode: orderData.promoCode
+      });
+    } catch (telegramError) {
+      // Log the error but don't fail the order creation
+      console.error('Failed to send Telegram notification:', telegramError);
+    }
+    
+    return order;
   } catch (error) {
-    console.error('Error getting order details:', error);
-    return null;
+    console.error('Error in createOrder:', error);
+    throw error;
   }
-};
-
-// Get allowed payment methods
-export const getAllowedPaymentMethods = () => {
-  // Return only bank transfer as a payment method, cash payments disabled
-  return ['card'];
 };

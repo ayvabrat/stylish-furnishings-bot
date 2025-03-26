@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchCategories } from '@/services/productService';
 import { uploadImage, addProduct, updateProduct } from '@/services/productService';
 import { CategoryType } from '@/types/product';
+import { X } from 'lucide-react';
 
 const productSchema = z.object({
   name_ru: z.string().min(2, 'Введите название на русском'),
@@ -61,7 +61,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, isEditing = fals
         setCategories(data);
       } catch (error) {
         console.error('Failed to load categories:', error);
-        toast.error(language === 'ru' ? 'Ошибка при загрузке категорий' : 'Санаттарды жүктеу қатесі');
+        toast.error(language === 'ru' ? 'Ошибка при загрузке категорий' : 'Санаттарды жүктеу қатесі', {
+          duration: 1000
+        });
       } finally {
         setIsLoading(false);
       }
@@ -104,31 +106,45 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, isEditing = fals
             }
           } catch (error) {
             console.error('Failed to upload image:', error);
-            toast.error(language === 'ru' ? 'Ошибка при загрузке изображения' : 'Суретті жүктеу қатесі');
+            toast.error(language === 'ru' ? 'Ошибка при загрузке изображения' : 'Суретті жүктеу қатесі', {
+              duration: 1000
+            });
           }
         }
       }
       
-      // Prepare product data
+      // Prepare product data - make sure all required fields are included
       const productData = {
-        ...values,
+        name_ru: values.name_ru,
+        name_kk: values.name_kk,
+        price: values.price,
+        description_ru: values.description_ru || '',
+        description_kk: values.description_kk || '',
+        category_id: values.category_id || null,
         images: uploadedImageUrls,
+        is_popular: values.is_popular
       };
       
       // Save product
       if (isEditing && initialData?.id) {
         await updateProduct(initialData.id, productData);
-        toast.success(language === 'ru' ? 'Товар успешно обновлен' : 'Тауар сәтті жаңартылды');
+        toast.success(language === 'ru' ? 'Товар успешно обновлен' : 'Тауар сәтті жаңартылды', {
+          duration: 1000
+        });
       } else {
         await addProduct(productData);
-        toast.success(language === 'ru' ? 'Товар успешно добавлен' : 'Тауар сәтті қосылды');
+        toast.success(language === 'ru' ? 'Товар успешно добавлен' : 'Тауар сәтті қосылды', {
+          duration: 1000
+        });
       }
       
       // Redirect back to products list
       navigate('/admin/products');
     } catch (error) {
       console.error('Failed to save product:', error);
-      toast.error(language === 'ru' ? 'Ошибка при сохранении товара' : 'Тауарды сақтау қатесі');
+      toast.error(language === 'ru' ? 'Ошибка при сохранении товара' : 'Тауарды сақтау қатесі', {
+        duration: 1000
+      });
     } finally {
       setIsSubmitting(false);
     }

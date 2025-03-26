@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
           <div className="space-y-4">
             <Logo />
             <p className="text-furniture-secondary text-sm mt-4">
-              ProMebel.shop - {t('footer.companyName')}
+              pro-mebel.shop - {t('footer.companyName')}
             </p>
           </div>
 
@@ -74,7 +74,7 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-furniture-secondary text-sm">
-            © {currentYear} ProMebel.shop. {t('footer.rights')}.
+            © {currentYear} pro-mebel.shop. {t('footer.rights')}.
           </p>
           <div className="mt-4 md:mt-0">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6 inline-block mr-2" />
