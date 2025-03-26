@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AdminSettings } from '@/types/admin';
+import { toast } from 'sonner';
 
 // Default settings
 const defaultSettings: AdminSettings = {
@@ -25,13 +26,20 @@ export const fetchAdminSettings = async (): Promise<AdminSettings> => {
       .eq('key', 'admin_settings')
       .single();
 
-    if (error || !data) {
-      console.log('No settings found, returning defaults');
+    if (error) {
+      console.log('No settings found or error occurred, returning defaults:', error);
+      return defaultSettings;
+    }
+
+    if (!data || !data.value) {
+      console.log('No settings value found, returning defaults');
       return defaultSettings;
     }
 
     try {
-      return JSON.parse(data.value);
+      const parsedSettings = JSON.parse(data.value);
+      console.log('Parsed admin settings:', parsedSettings);
+      return parsedSettings;
     } catch (e) {
       console.error('Error parsing admin settings:', e);
       return defaultSettings;
@@ -47,7 +55,7 @@ export const updateAdminSettings = async (settings: AdminSettings): Promise<bool
   console.log('Updating admin settings:', settings);
   
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('settings')
       .upsert({ 
         key: 'admin_settings',
@@ -56,6 +64,7 @@ export const updateAdminSettings = async (settings: AdminSettings): Promise<bool
 
     if (error) {
       console.error('Error updating admin settings:', error);
+      toast.error('Error saving settings: ' + error.message, { duration: 1000 });
       return false;
     }
 

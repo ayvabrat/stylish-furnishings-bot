@@ -1,8 +1,23 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from '@/lib/utils';
 
-// Save Telegram settings 
+type TelegramNotificationData = {
+  orderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  totalAmount: number;
+  items: {
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+};
+
+// Save Telegram settings
 export const saveTelegramSettings = async (botToken: string, adminId: string): Promise<boolean> => {
+  console.log('Saving Telegram settings:', { botToken, adminId });
+  
   try {
     const { error } = await supabase
       .from('settings')
@@ -17,88 +32,77 @@ export const saveTelegramSettings = async (botToken: string, adminId: string): P
     }
 
     return true;
-  } catch (error) {
-    console.error('Failed to save Telegram settings:', error);
+  } catch (err) {
+    console.error('Error in saveTelegramSettings:', err);
     return false;
   }
 };
 
-// Send order notification to Telegram
-export const sendOrderNotification = async (orderInfo: {
-  orderId: string;
-  customerName: string;
-  customerPhone: string;
-  totalAmount: number;
-  items: { productName: string; quantity: number; price: number }[];
-  promoCode: string | null;
-}): Promise<boolean> => {
+// Send notification via Telegram
+export const sendTelegramNotification = async (data: TelegramNotificationData): Promise<boolean> => {
   try {
-    // Get Telegram settings from database
-    const { data, error } = await supabase
+    // Get Telegram settings
+    const { data: telegramData, error } = await supabase
       .from('settings')
       .select('value')
       .eq('key', 'telegram_settings')
       .single();
-
-    if (error || !data) {
-      console.error('Error retrieving Telegram settings:', error);
+      
+    if (error || !telegramData) {
+      console.log('No Telegram settings found, skipping notification');
       return false;
     }
-
-    let settings;
+    
     try {
-      settings = JSON.parse(data.value);
+      const settings = JSON.parse(telegramData.value);
+      const { botToken, adminId } = settings;
+      
+      if (!botToken || !adminId) {
+        console.log('Incomplete Telegram settings, skipping notification');
+        return false;
+      }
+      
+      // Format message
+      const items = data.items.map(item => 
+        `• ${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
+      ).join('\n');
+      
+      const message = `
+🛒 *Новый заказ #${data.orderNumber}*
+
+👤 *Клиент:* ${data.customerName}
+📞 *Телефон:* ${data.customerPhone}
+
+*Товары:*
+${items}
+
+💰 *Итого:* ${formatPrice(data.totalAmount)}
+      `.trim();
+      
+      // Send message
+      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: adminId,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      });
+      
+      const result = await response.json();
+      console.log('Telegram notification sent:', result);
+      
+      return result.ok;
     } catch (e) {
       console.error('Error parsing Telegram settings:', e);
       return false;
     }
-
-    if (!settings.botToken || !settings.adminId) {
-      console.log('Telegram settings not configured');
-      return false;
-    }
-
-    // Create message text
-    let messageText = `🛍️ *НОВЫЙ ЗАКАЗ!* 🛍️\n\n`;
-    messageText += `*ID заказа:* ${orderInfo.orderId}\n`;
-    messageText += `*Имя клиента:* ${orderInfo.customerName}\n`;
-    messageText += `*Телефон:* ${orderInfo.customerPhone}\n\n`;
-    
-    messageText += `*Товары:*\n`;
-    orderInfo.items.forEach(item => {
-      messageText += `- ${item.productName} x${item.quantity} - ${item.price.toLocaleString()} ₸\n`;
-    });
-    
-    messageText += `\n*Итого:* ${orderInfo.totalAmount.toLocaleString()} ₸`;
-    
-    if (orderInfo.promoCode) {
-      messageText += `\n*Промокод:* ${orderInfo.promoCode}`;
-    }
-
-    // Use fetch to send the message
-    const url = `https://api.telegram.org/bot${settings.botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: settings.adminId,
-        text: messageText,
-        parse_mode: 'Markdown'
-      })
-    });
-
-    const result = await response.json();
-    
-    if (!result.ok) {
-      console.error('Telegram API error:', result);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Failed to send Telegram notification:', error);
+  } catch (err) {
+    console.error('Error sending Telegram notification:', err);
     return false;
   }
 };

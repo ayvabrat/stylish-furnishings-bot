@@ -2,149 +2,190 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useCart } from '@/contexts/CartContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { CreditCard, CheckCircle } from 'lucide-react';
+import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCart } from '@/contexts/CartContext';
 import { usePromotion } from '@/contexts/PromotionContext';
 import { createOrder } from '@/services/orderService';
 import { fetchAdminSettings } from '@/services/adminService';
+import { sendTelegramNotification } from '@/services/telegramService';
 import PromoCodeInput from '@/components/PromoCodeInput';
+import { AdminSettings } from '@/types/admin';
+import { formatPrice } from '@/lib/utils';
 
 const CheckoutPage = () => {
-  const navigate = useNavigate();
   const { language } = useLanguage();
-  const { cartItems, totalPrice, clearCart } = useCart();
-  const { promoCode, discountPercentage } = usePromotion();
-  const [isLoading, setIsLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'transfer'>('transfer');
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    city: '',
-    address: '',
-    postalCode: '',
-    notes: ''
-  });
-  const [paymentDetails, setPaymentDetails] = useState({
-    bankName: '',
-    accountNumber: '',
-    recipientName: ''
-  });
+  const { items, clearCart, calculateSubtotal } = useCart();
+  const { activePromotion, calculateDiscountedAmount } = usePromotion();
+  const navigate = useNavigate();
   
-  // Calculate discount amount and final price
-  const discountAmount = Math.round(totalPrice * (discountPercentage / 100));
-  const finalPrice = totalPrice - discountAmount;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer'>('bank_transfer');
+  const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
   
+  // Form state
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  
+  // Form errors
+  const [errors, setErrors] = useState<{
+    name?: string;
+    phone?: string;
+    city?: string;
+    address?: string;
+  }>({});
+  
+  // Load admin settings
   useEffect(() => {
-    // Load payment details from admin settings
-    const loadPaymentDetails = async () => {
+    const loadSettings = async () => {
       try {
         const settings = await fetchAdminSettings();
-        setPaymentDetails({
-          bankName: settings.paymentDetails.bankName,
-          accountNumber: settings.paymentDetails.accountNumber,
-          recipientName: settings.paymentDetails.recipientName
-        });
+        setAdminSettings(settings);
       } catch (error) {
-        console.error('Failed to load payment details:', error);
+        console.error('Failed to load admin settings:', error);
       }
     };
     
-    loadPaymentDetails();
-    
-    // Redirect to home if cart is empty
-    if (cartItems.length === 0) {
-      navigate('/');
-    }
-  }, [cartItems.length, navigate]);
+    loadSettings();
+  }, []);
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  // Calculate total amount
+  const subtotal = calculateSubtotal();
+  const discountAmount = activePromotion ? calculateDiscountedAmount(subtotal) : 0;
+  const total = subtotal - discountAmount;
+  
+  const validateForm = () => {
+    const newErrors: {
+      name?: string;
+      phone?: string;
+      city?: string;
+      address?: string;
+    } = {};
+    let isValid = true;
+    
+    if (!name.trim()) {
+      newErrors.name = language === 'ru' ? 'Введите ваше имя' : 'Атыңызды енгізіңіз';
+      isValid = false;
+    }
+    
+    if (!phone.trim()) {
+      newErrors.phone = language === 'ru' ? 'Введите ваш телефон' : 'Телефоныңызды енгізіңіз';
+      isValid = false;
+    }
+    
+    if (!city.trim()) {
+      newErrors.city = language === 'ru' ? 'Введите ваш город' : 'Қалаңызды енгізіңіз';
+      isValid = false;
+    }
+    
+    if (!address.trim()) {
+      newErrors.address = language === 'ru' ? 'Введите ваш адрес' : 'Мекенжайыңызды енгізіңіз';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!formData.name || !formData.phone || !formData.city || !formData.address) {
-      toast.error(language === 'ru' ? 'Пожалуйста, заполните все обязательные поля' : 'Барлық міндетті өрістерді толтырыңыз', {
+    if (!validateForm()) {
+      return;
+    }
+    
+    if (items.length === 0) {
+      toast.error(language === 'ru' ? 'Ваша корзина пуста' : 'Сіздің себетіңіз бос', {
         duration: 1000
       });
       return;
     }
     
-    // Phone number validation
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      toast.error(language === 'ru' ? 'Пожалуйста, введите корректный номер телефона' : 'Дұрыс телефон нөмірін енгізіңіз', {
-        duration: 1000
-      });
-      return;
-    }
-    
-    // Email validation if provided
-    if (formData.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        toast.error(language === 'ru' ? 'Пожалуйста, введите корректный email' : 'Дұрыс email енгізіңіз', {
-          duration: 1000
-        });
-        return;
-      }
-    }
-    
-    setIsLoading(true);
+    setIsSubmitting(true);
     
     try {
-      // Create order with all details
+      // Create order items from cart items
+      const orderItems = items.map(item => ({
+        product_id: item.id,
+        product_name: language === 'ru' ? item.name : item.nameKz,
+        quantity: item.quantity,
+        price: item.price
+      }));
+      
+      // Create order
       const orderData = {
-        customerName: formData.name,
-        customerPhone: formData.phone,
-        customerEmail: formData.email || null,
-        city: formData.city,
-        deliveryAddress: formData.address,
-        postalCode: formData.postalCode || null,
-        additionalNotes: formData.notes || null,
-        paymentMethod: paymentMethod,
-        totalAmount: finalPrice,
-        items: cartItems.map(item => ({
-          productId: item.id,
-          productName: language === 'ru' ? item.name : (item.nameKz || item.name),
-          price: item.price,
-          quantity: item.quantity
-        })),
-        discountApplied: discountPercentage > 0,
-        promoCode: promoCode || null,
-        discountAmount: discountAmount || 0
+        customer_name: name,
+        customer_phone: phone,
+        customer_email: email || null,
+        city,
+        delivery_address: address,
+        postal_code: postalCode || null,
+        payment_method: paymentMethod,
+        additional_notes: additionalNotes || null,
+        total_amount: total,
+        items: orderItems,
+        promo_code: activePromotion?.code || null,
+        discount_amount: discountAmount || 0
       };
       
-      await createOrder(orderData);
+      console.log('Submitting order:', orderData);
       
-      // Clear cart and navigate to success page
+      // Send order to backend
+      const orderId = await createOrder(orderData);
+      
+      console.log('Order created with ID:', orderId);
+      
+      // Send notification via Telegram if enabled
+      try {
+        await sendTelegramNotification({
+          orderNumber: orderId.substring(0, 8),
+          customerName: name,
+          customerPhone: phone,
+          totalAmount: total,
+          items: items.map(item => ({
+            name: language === 'ru' ? item.name : item.nameKz,
+            quantity: item.quantity,
+            price: item.price
+          }))
+        });
+      } catch (telegramError) {
+        console.error('Failed to send Telegram notification:', telegramError);
+        // Continue with order process even if Telegram notification fails
+      }
+      
+      // Clear cart and redirect to success page
       clearCart();
-      navigate('/checkout/success', { 
-        state: { 
-          orderData: {
-            ...orderData,
-            paymentDetails: paymentMethod === 'transfer' ? paymentDetails : null
-          }
-        } 
+      
+      navigate('/checkout/success', {
+        state: {
+          orderId,
+          paymentMethod,
+          total
+        }
+      });
+      
+      toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
+        duration: 1000
       });
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error(
-        language === 'ru' 
-          ? 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз.' 
-          : 'Тапсырысты рәсімдеу кезінде қате пайда болды. Қайталап көріңіз.',
-        { duration: 1000 }
-      );
+      console.error('Failed to create order:', error);
+      toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырысты рәсімдеу кезінде қате', {
+        duration: 1000
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   
@@ -152,207 +193,219 @@ const CheckoutPage = () => {
     <Layout>
       <div className="bg-white py-10 md:py-16">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center">
-              {language === 'ru' ? 'Оформление заказа' : 'Тапсырысты рәсімдеу'}
-            </h1>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Order Form */}
-              <div className="md:col-span-2">
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                  <form onSubmit={handleSubmit}>
-                    <h2 className="text-xl font-semibold mb-4">
-                      {language === 'ru' ? 'Контактная информация' : 'Байланыс ақпараты'}
-                    </h2>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                      <div>
-                        <label htmlFor="name" className="block text-sm font-medium mb-1">
-                          {language === 'ru' ? 'Имя и фамилия' : 'Аты-жөні'} *
-                        </label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="phone" className="block text-sm font-medium mb-1">
-                          {language === 'ru' ? 'Телефон' : 'Телефон'} *
-                        </label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          placeholder="+7 (XXX) XXX-XX-XX"
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="email" className="block text-sm font-medium mb-1">
-                          {language === 'ru' ? 'Email' : 'Email'}
-                        </label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                        />
-                      </div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-6">
+            {language === 'ru' ? 'Оформление заказа' : 'Тапсырысты рәсімдеу'}
+          </h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                  <h2 className="text-xl font-semibold mb-4">
+                    {language === 'ru' ? 'Контактная информация' : 'Байланыс ақпараты'}
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">
+                        {language === 'ru' ? 'Имя' : 'Аты'} <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className={errors.name ? 'border-red-500' : ''}
+                      />
+                      {errors.name && (
+                        <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                      )}
                     </div>
                     
-                    <h2 className="text-xl font-semibold mb-4">
-                      {language === 'ru' ? 'Адрес доставки' : 'Жеткізу мекенжайы'}
-                    </h2>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                      <div>
-                        <label htmlFor="city" className="block text-sm font-medium mb-1">
-                          {language === 'ru' ? 'Город' : 'Қала'} *
-                        </label>
-                        <Input
-                          id="city"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="postalCode" className="block text-sm font-medium mb-1">
-                          {language === 'ru' ? 'Почтовый индекс' : 'Пошта индексі'}
-                        </label>
-                        <Input
-                          id="postalCode"
-                          name="postalCode"
-                          value={formData.postalCode}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                      
-                      <div className="md:col-span-2">
-                        <label htmlFor="address" className="block text-sm font-medium mb-1">
-                          {language === 'ru' ? 'Адрес (улица, дом, квартира)' : 'Мекенжай (көше, үй, пәтер)'} *
-                        </label>
-                        <Input
-                          id="address"
-                          name="address"
-                          value={formData.address}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="phone">
+                        {language === 'ru' ? 'Телефон' : 'Телефон'} <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+7 (XXX) XXX-XX-XX"
+                        className={errors.phone ? 'border-red-500' : ''}
+                      />
+                      {errors.phone && (
+                        <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                      )}
                     </div>
                     
-                    <div className="mb-6">
-                      <label htmlFor="notes" className="block text-sm font-medium mb-1">
-                        {language === 'ru' ? 'Примечания к заказу' : 'Тапсырысқа қатысты ескертпелер'}
-                      </label>
+                    <div>
+                      <Label htmlFor="email">
+                        {language === 'ru' ? 'Email (необязательно)' : 'Email (міндетті емес)'}
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                  <h2 className="text-xl font-semibold mb-4">
+                    {language === 'ru' ? 'Адрес доставки' : 'Жеткізу мекенжайы'}
+                  </h2>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="city">
+                        {language === 'ru' ? 'Город' : 'Қала'} <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className={errors.city ? 'border-red-500' : ''}
+                      />
+                      {errors.city && (
+                        <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="address">
+                        {language === 'ru' ? 'Адрес' : 'Мекенжай'} <span className="text-red-500">*</span>
+                      </Label>
                       <Textarea
-                        id="notes"
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleInputChange}
-                        rows={3}
+                        id="address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className={errors.address ? 'border-red-500' : ''}
+                      />
+                      {errors.address && (
+                        <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="postalCode">
+                        {language === 'ru' ? 'Почтовый индекс (необязательно)' : 'Пошта индексі (міндетті емес)'}
+                      </Label>
+                      <Input
+                        id="postalCode"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
                       />
                     </div>
                     
-                    <h2 className="text-xl font-semibold mb-4">
-                      {language === 'ru' ? 'Способ оплаты' : 'Төлем әдісі'}
-                    </h2>
-                    
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center">
-                        <input
-                          type="radio"
-                          id="transfer"
-                          name="paymentMethod"
-                          value="transfer"
-                          checked={paymentMethod === 'transfer'}
-                          onChange={() => setPaymentMethod('transfer')}
-                          className="h-4 w-4 text-furniture-primary focus:ring-furniture-primary border-gray-300"
-                        />
-                        <label htmlFor="transfer" className="ml-2 block text-sm">
-                          {language === 'ru' ? 'Банковский перевод' : 'Банк аударымы'}
-                        </label>
-                      </div>
+                    <div>
+                      <Label htmlFor="additionalNotes">
+                        {language === 'ru' ? 'Дополнительная информация (необязательно)' : 'Қосымша ақпарат (міндетті емес)'}
+                      </Label>
+                      <Textarea
+                        id="additionalNotes"
+                        value={additionalNotes}
+                        onChange={(e) => setAdditionalNotes(e.target.value)}
+                        placeholder={language === 'ru' ? 'Комментарии к заказу или доставке' : 'Тапсырыс немесе жеткізу туралы пікірлер'}
+                      />
                     </div>
-                    
-                    <div className="mt-8">
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <span className="flex items-center justify-center">
-                            <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
-                            {language === 'ru' ? 'Оформление...' : 'Рәсімдеу...'}
-                          </span>
-                        ) : (
-                          language === 'ru' ? 'Оформить заказ' : 'Тапсырысты рәсімдеу'
-                        )}
-                      </Button>
-                    </div>
-                  </form>
+                  </div>
                 </div>
-              </div>
-              
-              {/* Order Summary */}
-              <div>
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm sticky top-20">
+                
+                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">
-                    {language === 'ru' ? 'Ваш заказ' : 'Сіздің тапсырысыңыз'}
+                    {language === 'ru' ? 'Способ оплаты' : 'Төлем әдісі'}
                   </h2>
                   
-                  <div className="divide-y">
-                    {cart.map((item) => (
-                      <div key={item.id} className="py-3 flex justify-between">
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod as any}>
+                    <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer">
+                      <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+                      <Label htmlFor="bank_transfer" className="flex items-center cursor-pointer">
+                        <CreditCard className="h-4 w-4 mr-2 text-furniture-secondary" />
                         <div>
-                          <p className="font-medium">
-                            {language === 'ru' ? item.name : (item.nameKz || item.name)}
-                          </p>
-                          <p className="text-sm text-furniture-secondary">
-                            {item.quantity} x {item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₸
+                          <div>{language === 'ru' ? 'Банковский перевод' : 'Банк аударымы'}</div>
+                          <p className="text-sm text-gray-500">
+                            {language === 'ru' ? 'Реквизиты для оплаты будут отправлены после оформления заказа' : 'Төлем реквизиттері тапсырыс рәсімделгеннен кейін жіберіледі'}
                           </p>
                         </div>
-                        <p className="font-medium">
-                          {(item.price * item.quantity).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₸
-                        </p>
-                      </div>
-                    ))}
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              
+                <div className="mt-8">
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={isSubmitting || items.length === 0}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                        {language === 'ru' ? 'Оформление...' : 'Рәсімделуде...'}
+                      </>
+                    ) : (
+                      language === 'ru' ? 'Оформить заказ' : 'Тапсырысты рәсімдеу'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+            
+            <div className="lg:col-span-1">
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm sticky top-24">
+                <h2 className="text-xl font-semibold mb-4">
+                  {language === 'ru' ? 'Ваш заказ' : 'Сіздің тапсырысыңыз'}
+                </h2>
+                
+                <div className="space-y-4">
+                  {items.length > 0 ? (
+                    <div className="space-y-3">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex justify-between">
+                          <div>
+                            <span className="font-medium">
+                              {language === 'ru' ? item.name : item.nameKz}
+                            </span>
+                            <span className="text-gray-600"> × {item.quantity}</span>
+                          </div>
+                          <div className="font-medium">
+                            {formatPrice(item.price * item.quantity)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      {language === 'ru' ? 'Корзина пуста' : 'Себет бос'}
+                    </div>
+                  )}
+                  
+                  <div className="border-t pt-4">
+                    <PromoCodeInput />
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="mb-4">
-                      <PromoCodeInput />
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        {language === 'ru' ? 'Подытог' : 'Аралық жиынтық'}
+                      </span>
+                      <span>{formatPrice(subtotal)}</span>
                     </div>
                     
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <p>{language === 'ru' ? 'Подытог' : 'Аралық сома'}</p>
-                        <p>{totalPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₸</p>
+                    {activePromotion && (
+                      <div className="flex justify-between text-green-600">
+                        <span>
+                          {language === 'ru' ? 'Скидка' : 'Жеңілдік'} ({activePromotion.discountPercentage}%)
+                        </span>
+                        <span>-{formatPrice(discountAmount)}</span>
                       </div>
-                      
-                      {discountPercentage > 0 && (
-                        <div className="flex justify-between text-green-600">
-                          <p>{language === 'ru' ? `Скидка (${discountPercentage}%)` : `Жеңілдік (${discountPercentage}%)`}</p>
-                          <p>-{discountAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₸</p>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                        <p>{language === 'ru' ? 'Итого' : 'Жалпы'}</p>
-                        <p>{finalPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₸</p>
-                      </div>
+                    )}
+                    
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                      <span>{language === 'ru' ? 'Итого' : 'Барлығы'}</span>
+                      <span>{formatPrice(total)}</span>
                     </div>
                   </div>
                 </div>
