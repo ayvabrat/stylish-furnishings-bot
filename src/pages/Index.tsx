@@ -1,187 +1,185 @@
 
-import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
 import ProductGrid from '@/components/ProductGrid';
 import CategoryCard from '@/components/CategoryCard';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { categories, getPopularProducts } from '@/data/products';
+import { fetchPopularProducts, fetchNewProducts } from '@/services/productService';
+import { ProductType } from '@/types/product';
+import HomePromoArea from '@/components/HomePromoArea';
 
-const Index = () => {
-  const { t } = useLanguage();
-  const popularProducts = getPopularProducts();
+export default function Home() {
+  const { language } = useLanguage();
+  const [popularProducts, setPopularProducts] = useState<ProductType[]>([]);
+  const [newProducts, setNewProducts] = useState<ProductType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Scroll to top on component mount
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const loadProducts = async () => {
+      setIsLoading(true);
+      try {
+        const popular = await fetchPopularProducts(4);
+        const newItems = await fetchNewProducts(4);
+        
+        setPopularProducts(popular);
+        setNewProducts(newItems);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadProducts();
   }, []);
 
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative bg-furniture-light min-h-[80vh] flex items-center">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/80 to-white/20 z-10"></div>
-          <motion.img 
-            src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=2000"
-            alt="Modern Furniture"
-            className="w-full h-full object-cover object-center"
-            initial={{ scale: 1.1, opacity: 0.8 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1.5, ease: [0.19, 1, 0.22, 1] }}
-          />
-        </div>
-        
-        <div className="container mx-auto px-4 md:px-6 z-20 relative">
-          <div className="max-w-2xl">
-            <motion.h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              {t('home.hero.title')}
-            </motion.h1>
-            
-            <motion.p 
-              className="text-lg md:text-xl mb-8 text-furniture-secondary"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.4 }}
-            >
-              {t('home.hero.subtitle')}
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.6 }}
-              className="space-x-4"
-            >
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-furniture-primary text-white hover:bg-furniture-dark"
-              >
-                <Link to="/catalog">
-                  {t('nav.catalog')}
-                  <ArrowRight size={16} className="ml-2" />
-                </Link>
-              </Button>
-            </motion.div>
+      <section className="relative bg-furniture-primary/5 py-20 md:py-32">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="max-w-screen-xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <div className="text-center md:text-left">
+                <h1 className="text-3xl md:text-5xl font-bold mb-4 text-furniture-secondary">
+                  {language === 'ru' 
+                    ? 'Современная мебель для вашего комфорта' 
+                    : 'Сіздің жайлылығыңыз үшін заманауи жиһаз'}
+                </h1>
+                <p className="text-lg md:text-xl mb-8 text-gray-600">
+                  {language === 'ru'
+                    ? 'Создайте дом своей мечты с нашей элегантной и функциональной мебелью'
+                    : 'Біздің талғампаз және функционалды жиһазымызбен өз арманыңыздағы үйді жасаңыз'}
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                  <Button asChild size="lg" className="bg-furniture-primary hover:bg-furniture-primary/90">
+                    <Link to="/catalog">
+                      {language === 'ru' ? 'Смотреть каталог' : 'Каталогты қарау'}
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline">
+                    <Link to="/about">
+                      {language === 'ru' ? 'О нас' : 'Біз туралы'}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="hidden md:block">
+                <img 
+                  src="/images/hero-furniture.jpg" 
+                  alt={language === 'ru' ? 'Современная мебель' : 'Заманауи жиһаз'} 
+                  className="w-full h-auto rounded-lg shadow-xl"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Promo Code Banner Section */}
+      <HomePromoArea />
+
       {/* Categories Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              {t('home.categories.title')}
+          <div className="max-w-screen-xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+              {language === 'ru' ? 'Категории' : 'Санаттар'}
             </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {categories.map((category, index) => (
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <CategoryCard 
-                key={category.id} 
-                category={category} 
-                index={index}
+                slug="livingroom"
+                title={language === 'ru' ? 'Гостиная' : 'Қонақ бөлмесі'}
+                imageUrl="/images/categories/livingroom.jpg"
               />
-            ))}
+              <CategoryCard 
+                slug="bedroom"
+                title={language === 'ru' ? 'Спальня' : 'Жатын бөлме'}
+                imageUrl="/images/categories/bedroom.jpg"
+              />
+              <CategoryCard 
+                slug="kitchen"
+                title={language === 'ru' ? 'Кухня' : 'Ас үй'}
+                imageUrl="/images/categories/kitchen.jpg"
+              />
+              <CategoryCard 
+                slug="office"
+                title={language === 'ru' ? 'Офис' : 'Кеңсе'}
+                imageUrl="/images/categories/office.jpg"
+              />
+            </div>
+            
+            <div className="mt-10 text-center">
+              <Button asChild variant="outline">
+                <Link to="/catalog">
+                  {language === 'ru' ? 'Все категории' : 'Барлық санаттар'}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Popular Products Section */}
-      <section className="py-16 bg-furniture-light">
+      <section className="py-16 bg-furniture-secondary/5">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex justify-between items-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              {t('home.popular.title')}
+          <div className="max-w-screen-xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+              {language === 'ru' ? 'Популярные товары' : 'Танымал тауарлар'}
             </h2>
-            <Link 
-              to="/catalog" 
-              className="text-furniture-primary hover:text-furniture-secondary flex items-center text-sm font-medium"
-            >
-              {t('nav.catalog')}
-              <ArrowRight size={16} className="ml-1" />
-            </Link>
+            
+            {isLoading ? (
+              <div className="flex justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-furniture-primary border-t-transparent rounded-full"></div>
+              </div>
+            ) : (
+              <ProductGrid products={popularProducts} />
+            )}
+            
+            <div className="mt-10 text-center">
+              <Button asChild>
+                <Link to="/catalog">
+                  {language === 'ru' ? 'Все товары' : 'Барлық тауарлар'}
+                </Link>
+              </Button>
+            </div>
           </div>
-          
-          <ProductGrid products={popularProducts} />
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* New Products Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              {t('home.benefits.title')}
+          <div className="max-w-screen-xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+              {language === 'ru' ? 'Новинки' : 'Жаңа тауарлар'}
             </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Quality */}
-            <motion.div 
-              className="text-center p-6 rounded-lg bg-furniture-light"
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 bg-furniture-primary/10 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-furniture-primary"><path d="M12 2l3 1.5v5.5l-3 1.5-3-1.5V3.5L12 2z"/><path d="M13.5 10v7.5L7 21l-1.5-1.5V15l4.5-3"/><path d="M13.5 10L19 15v4.5L17.5 21L11 17.5"/></svg>
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t('home.benefits.quality')}
-              </h3>
-              <p className="text-furniture-secondary text-sm">
-                {t('home.benefits.quality.desc')}
-              </p>
-            </motion.div>
             
-            {/* Delivery */}
-            <motion.div 
-              className="text-center p-6 rounded-lg bg-furniture-light"
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 bg-furniture-primary/10 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-furniture-primary"><rect width="16" height="13" x="4" y="5" rx="2"/><path d="m22 8-4 4"/><path d="m2 8 4 4"/><path d="m10 5 4-2"/><path d="M9.1 15.96c-.31-.32-.84-.35-1.23-.12a1.07 1.07 0 0 0-.45 1.18c.08.3.32.56.62.7l1.8.86"/><path d="M13.73 15.96c.31-.32.84-.35 1.23-.12.37.2.6.58.45 1.18-.08.3-.32.56-.62.7l-1.28.61"/><path d="M12 16v2"/></svg>
+            {isLoading ? (
+              <div className="flex justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-furniture-primary border-t-transparent rounded-full"></div>
               </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t('home.benefits.delivery')}
-              </h3>
-              <p className="text-furniture-secondary text-sm">
-                {t('home.benefits.delivery.desc')}
-              </p>
-            </motion.div>
+            ) : (
+              <ProductGrid products={newProducts} />
+            )}
             
-            {/* Warranty */}
-            <motion.div 
-              className="text-center p-6 rounded-lg bg-furniture-light"
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 bg-furniture-primary/10 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-furniture-primary"><path d="M8 11V5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v0a1 1 0 0 1-1 1H9"/><path d="M11 15h1"/><rect width="18" height="12" x="3" y="8" rx="2"/></svg>
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t('home.benefits.warranty')}
-              </h3>
-              <p className="text-furniture-secondary text-sm">
-                {t('home.benefits.warranty.desc')}
-              </p>
-            </motion.div>
+            <div className="mt-10 text-center">
+              <Button asChild>
+                <Link to="/catalog">
+                  {language === 'ru' ? 'Все новинки' : 'Барлық жаңа тауарлар'}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
     </Layout>
   );
-};
-
-export default Index;
+}

@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 
 interface AdminContextType {
   isAuthenticated: boolean;
@@ -16,8 +17,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Check for existing admin session on mount
   useEffect(() => {
-    const adminAuth = localStorage.getItem('admin_auth');
-    if (adminAuth === 'true') {
+    const adminAuth = loadFromLocalStorage('admin_auth', false);
+    if (adminAuth === true) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -26,7 +27,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Simple password check - in production, this should be more secure
     if (password === 'mebel2024') {
       setIsAuthenticated(true);
-      localStorage.setItem('admin_auth', 'true');
+      saveToLocalStorage('admin_auth', true);
       return true;
     }
     return false;
@@ -34,7 +35,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('admin_auth');
+    saveToLocalStorage('admin_auth', false);
     navigate('/admin/login');
   };
 

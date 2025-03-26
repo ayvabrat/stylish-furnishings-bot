@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { ProductType } from '@/types/product';
+import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 
 interface CartItem extends ProductType {
   quantity: number;
@@ -21,15 +22,14 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Initialize cart state from localStorage or empty array
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  // Initialize cart state from localStorage
+  const [items, setItems] = useState<CartItem[]>(() => 
+    loadFromLocalStorage('cart', [])
+  );
 
   // Update localStorage when cart changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    saveToLocalStorage('cart', items);
   }, [items]);
 
   // Add item to cart
@@ -44,13 +44,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updatedItems[existingItemIndex].quantity += 1;
         
         toast.success('Товар добавлен в корзину', {
-          duration: 1000
+          duration: 3000
         });
         return updatedItems;
       } else {
         // Add new item with quantity 1
         toast.success('Товар добавлен в корзину', {
-          duration: 1000
+          duration: 3000
         });
         return [...prevItems, { ...product, quantity: 1 }];
       }
@@ -61,7 +61,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const removeItem = (productId: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== productId));
     toast.info('Товар удален из корзины', {
-      duration: 1000
+      duration: 3000
     });
   };
 

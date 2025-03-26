@@ -26,7 +26,7 @@ export const createOrder = async (orderData: {
   console.log('Creating order with data:', orderData);
   
   try {
-    // First, create the order record
+    // First, create the order record with snake_case keys
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({

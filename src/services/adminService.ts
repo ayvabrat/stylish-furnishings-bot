@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AdminSettings } from '@/types/admin';
 import { toast } from 'sonner';
+import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 
 // Default settings
 const defaultSettings: AdminSettings = {
@@ -21,16 +22,10 @@ const defaultSettings: AdminSettings = {
 export const fetchAdminSettings = async (): Promise<AdminSettings> => {
   try {
     // Try to get admin settings from localStorage first as a fallback
-    const cachedSettings = localStorage.getItem('admin_settings');
-    let localSettings = null;
+    const localSettings = loadFromLocalStorage<AdminSettings | null>('admin_settings', null);
     
-    if (cachedSettings) {
-      try {
-        localSettings = JSON.parse(cachedSettings);
-        console.log('Found cached admin settings:', localSettings);
-      } catch (e) {
-        console.error('Error parsing cached admin settings:', e);
-      }
+    if (localSettings) {
+      console.log('Found cached admin settings:', localSettings);
     }
     
     // Try to get settings from the database
@@ -57,7 +52,7 @@ export const fetchAdminSettings = async (): Promise<AdminSettings> => {
       console.log('Parsed admin settings from database:', parsedSettings);
       
       // Cache the settings in localStorage
-      localStorage.setItem('admin_settings', data.value);
+      saveToLocalStorage('admin_settings', parsedSettings);
       
       return parsedSettings;
     } catch (e) {
@@ -68,13 +63,9 @@ export const fetchAdminSettings = async (): Promise<AdminSettings> => {
   } catch (err) {
     console.error('Error in fetchAdminSettings:', err);
     // Check if we have cached settings
-    const cachedSettings = localStorage.getItem('admin_settings');
-    if (cachedSettings) {
-      try {
-        return JSON.parse(cachedSettings);
-      } catch (e) {
-        console.error('Error parsing cached settings:', e);
-      }
+    const localSettings = loadFromLocalStorage<AdminSettings | null>('admin_settings', null);
+    if (localSettings) {
+      return localSettings;
     }
     return defaultSettings;
   }
@@ -86,7 +77,7 @@ export const updateAdminSettings = async (settings: AdminSettings): Promise<bool
   
   try {
     // Cache settings in localStorage as a fallback
-    localStorage.setItem('admin_settings', JSON.stringify(settings));
+    saveToLocalStorage('admin_settings', settings);
     
     const { error } = await supabase
       .from('settings')
@@ -97,7 +88,7 @@ export const updateAdminSettings = async (settings: AdminSettings): Promise<bool
 
     if (error) {
       console.error('Error updating admin settings in database:', error);
-      toast.error('Error saving settings: ' + error.message, { duration: 1000 });
+      toast.error('Error saving settings: ' + error.message, { duration: 3000 });
       return false;
     }
 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePromotion } from '@/contexts/PromotionContext';
@@ -11,9 +11,35 @@ const PromoCodeInput: React.FC = () => {
   const { promoCode, discountPercentage, applyPromoCode, removePromoCode, isValidatingPromo } = usePromotion();
   const [inputCode, setInputCode] = useState('');
 
+  // Check URL parameters for promo code on mount
+  useEffect(() => {
+    const checkUrlForPromoCode = () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const promoFromUrl = urlParams.get('promo');
+        
+        if (promoFromUrl && !promoCode) {
+          console.log('Found promo code in URL:', promoFromUrl);
+          // Automatically apply promo code from URL
+          applyPromoCode(promoFromUrl);
+        }
+      } catch (err) {
+        console.error('Error checking URL for promo code:', err);
+      }
+    };
+    
+    checkUrlForPromoCode();
+  }, [applyPromoCode, promoCode]);
+
   const handleApplyPromo = async () => {
     if (inputCode.trim()) {
       await applyPromoCode(inputCode.trim());
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleApplyPromo();
     }
   };
 
@@ -21,7 +47,7 @@ const PromoCodeInput: React.FC = () => {
     return (
       <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
         <div className="flex items-center">
-          <Tag className="h-4 w-4 text-green-600 mr-2" />
+          <Tag className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
           <div>
             <p className="font-medium text-green-700">
               {language === 'ru' ? 'Промокод применен' : 'Промокод қолданылды'}
@@ -50,6 +76,7 @@ const PromoCodeInput: React.FC = () => {
           placeholder={language === 'ru' ? "Введите промокод" : "Промокодты енгізіңіз"}
           value={inputCode}
           onChange={(e) => setInputCode(e.target.value)}
+          onKeyPress={handleKeyPress}
           className="flex-1"
         />
         <Button 

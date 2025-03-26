@@ -1,7 +1,8 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { toast } from 'sonner';
 import { validatePromoCode } from '@/services/promotionService';
+import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 
 interface PromotionContextType {
   promoCode: string;
@@ -16,9 +17,22 @@ interface PromotionContextType {
 const PromotionContext = createContext<PromotionContextType | undefined>(undefined);
 
 export const PromotionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [promoCode, setPromoCode] = useState<string>('');
-  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  // Инициализация состояния из localStorage
+  const [promoCode, setPromoCode] = useState<string>(() => 
+    loadFromLocalStorage('promoCode', '')
+  );
+  
+  const [discountPercentage, setDiscountPercentage] = useState<number>(() => 
+    loadFromLocalStorage('discountPercentage', 0)
+  );
+  
   const [isValidatingPromo, setIsValidatingPromo] = useState<boolean>(false);
+
+  // Сохранение состояния в localStorage при изменении
+  useEffect(() => {
+    saveToLocalStorage('promoCode', promoCode);
+    saveToLocalStorage('discountPercentage', discountPercentage);
+  }, [promoCode, discountPercentage]);
 
   // Active promotion object
   const activePromotion = promoCode ? {
@@ -36,7 +50,7 @@ export const PromotionProvider: React.FC<{ children: ReactNode }> = ({ children 
   const applyPromoCode = async (code: string): Promise<boolean> => {
     if (!code) {
       toast.error('Введите промокод', {
-        duration: 1000
+        duration: 3000
       });
       return false;
     }
@@ -49,19 +63,19 @@ export const PromotionProvider: React.FC<{ children: ReactNode }> = ({ children 
         setPromoCode(promoResult.code);
         setDiscountPercentage(promoResult.discountPercentage);
         toast.success(`Промокод ${promoResult.code} применен! Скидка ${promoResult.discountPercentage}%`, {
-          duration: 1000
+          duration: 3000
         });
         return true;
       } else {
         toast.error('Недействительный промокод', {
-          duration: 1000
+          duration: 3000
         });
         return false;
       }
     } catch (error) {
       console.error('Error validating promo code:', error);
       toast.error('Ошибка при проверке промокода', {
-        duration: 1000
+        duration: 3000
       });
       return false;
     } finally {

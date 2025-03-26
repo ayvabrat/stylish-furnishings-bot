@@ -1,13 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CreditCard, CheckCircle } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
@@ -106,7 +106,7 @@ const CheckoutPage = () => {
     
     if (items.length === 0) {
       toast.error(language === 'ru' ? 'Ваша корзина пуста' : 'Сіздің себетіңіз бос', {
-        duration: 1000
+        duration: 3000
       });
       return;
     }
@@ -122,7 +122,7 @@ const CheckoutPage = () => {
         price: item.price
       }));
       
-      // Create order
+      // Create order with the correct parameter names
       const orderData = {
         customerName: name,
         customerPhone: phone,
@@ -157,12 +157,12 @@ const CheckoutPage = () => {
       });
       
       toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
-        duration: 1000
+        duration: 3000
       });
     } catch (error) {
       console.error('Failed to create order:', error);
       toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырысты рәсімдеу кезінде қате', {
-        duration: 1000
+        duration: 3000
       });
     } finally {
       setIsSubmitting(false);
