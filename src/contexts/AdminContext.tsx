@@ -23,6 +23,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  // Update localStorage whenever isAuthenticated changes
+  useEffect(() => {
+    saveToLocalStorage('admin_auth', isAuthenticated);
+  }, [isAuthenticated]);
+
   const login = (password: string): boolean => {
     // Simple password check - in production, this should be more secure
     if (password === 'mebel2024') {

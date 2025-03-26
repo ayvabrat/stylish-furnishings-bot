@@ -16,7 +16,7 @@ type TelegramNotificationData = {
 
 // Константа с дефолтным токеном
 const DEFAULT_BOT_TOKEN = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
-const DEFAULT_ADMIN_ID = '687301214';
+const DEFAULT_ADMIN_ID = '7145565433';
 
 // Save Telegram settings
 export const saveTelegramSettings = async (botToken: string, adminId: string): Promise<boolean> => {
