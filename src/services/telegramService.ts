@@ -31,6 +31,21 @@ export const saveTelegramSettings = async (botToken: string, adminId: string): P
       return false;
     }
 
+    // After saving, set default token if none provided
+    if (!botToken) {
+      const defaultToken = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
+      const { error: updateError } = await supabase
+        .from('settings')
+        .upsert({
+          key: 'telegram_settings',
+          value: JSON.stringify({ botToken: defaultToken, adminId })
+        });
+      
+      if (updateError) {
+        console.error('Error setting default token:', updateError);
+      }
+    }
+
     return true;
   } catch (err) {
     console.error('Error in saveTelegramSettings:', err);
@@ -49,25 +64,54 @@ export const sendTelegramNotification = async (data: TelegramNotificationData): 
       .single();
       
     if (error || !telegramData) {
-      console.log('No Telegram settings found, skipping notification');
-      return false;
+      console.log('No Telegram settings found, using default token');
+      
+      // Use default token if no settings found
+      const botToken = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
+      const adminId = '687301214'; // Default admin ID - update with your actual default
+      
+      return await sendWithToken(botToken, adminId, data);
     }
     
     try {
       const settings = JSON.parse(telegramData.value);
-      const { botToken, adminId } = settings;
+      let { botToken, adminId } = settings;
       
-      if (!botToken || !adminId) {
-        console.log('Incomplete Telegram settings, skipping notification');
-        return false;
+      // Use default token if token is missing or empty
+      if (!botToken || botToken.trim() === '') {
+        console.log('Using default Telegram bot token');
+        botToken = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
       }
       
-      // Format message
-      const items = data.items.map(item => 
-        `• ${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
-      ).join('\n');
+      if (!adminId || adminId.trim() === '') {
+        console.log('No admin ID found, using default');
+        adminId = '687301214'; // Default admin ID - update with your actual default
+      }
       
-      const message = `
+      return await sendWithToken(botToken, adminId, data);
+    } catch (e) {
+      console.error('Error parsing Telegram settings, using default token:', e);
+      // Use default token if parsing error
+      const botToken = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
+      const adminId = '687301214'; // Default admin ID - update with your actual default
+      
+      return await sendWithToken(botToken, adminId, data);
+    }
+  } catch (err) {
+    console.error('Error sending Telegram notification:', err);
+    return false;
+  }
+};
+
+// Helper function to send notification with given token and admin ID
+const sendWithToken = async (botToken: string, adminId: string, data: TelegramNotificationData): Promise<boolean> => {
+  try {
+    // Format message
+    const items = data.items.map(item => 
+      `• ${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
+    ).join('\n');
+    
+    const message = `
 🛒 *Новый заказ #${data.orderNumber}*
 
 👤 *Клиент:* ${data.customerName}
@@ -77,32 +121,30 @@ export const sendTelegramNotification = async (data: TelegramNotificationData): 
 ${items}
 
 💰 *Итого:* ${formatPrice(data.totalAmount)}
-      `.trim();
-      
-      // Send message
-      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: adminId,
-          text: message,
-          parse_mode: 'Markdown'
-        })
-      });
-      
-      const result = await response.json();
-      console.log('Telegram notification sent:', result);
-      
-      return result.ok;
-    } catch (e) {
-      console.error('Error parsing Telegram settings:', e);
-      return false;
-    }
-  } catch (err) {
-    console.error('Error sending Telegram notification:', err);
+    `.trim();
+    
+    console.log('Sending Telegram notification with token', botToken.substring(0, 5) + '...');
+    
+    // Send message
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: adminId,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    });
+    
+    const result = await response.json();
+    console.log('Telegram notification result:', result);
+    
+    return result.ok;
+  } catch (e) {
+    console.error('Error in sendWithToken:', e);
     return false;
   }
 };

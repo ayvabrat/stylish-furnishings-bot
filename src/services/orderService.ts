@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { sendOrderNotification } from '@/services/telegramService';
+import { sendTelegramNotification } from '@/services/telegramService';
 
 // Create a new order
 export const createOrder = async (orderData: {
@@ -20,7 +20,6 @@ export const createOrder = async (orderData: {
     price: number;
     quantity: number;
   }[];
-  discountApplied: boolean;
   promoCode: string | null;
   discountAmount: number;
 }) => {
@@ -72,22 +71,30 @@ export const createOrder = async (orderData: {
       throw new Error(itemsError.message);
     }
     
-    // Send order notification to Telegram if function exists
+    // Generate a shortened order ID for display
+    const shortOrderId = order.id.substring(0, 8);
+    
+    // Send notification via Telegram
     try {
-      await sendOrderNotification({
-        orderId: order.id,
+      console.log('Sending Telegram notification for order:', shortOrderId);
+      
+      await sendTelegramNotification({
+        orderNumber: shortOrderId,
         customerName: orderData.customerName,
         customerPhone: orderData.customerPhone,
         totalAmount: orderData.totalAmount,
-        items: orderData.items,
-        promoCode: orderData.promoCode
+        items: orderData.items.map(item => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.price
+        }))
       });
     } catch (telegramError) {
       // Log the error but don't fail the order creation
       console.error('Failed to send Telegram notification:', telegramError);
     }
     
-    return order;
+    return order.id;
   } catch (error) {
     console.error('Error in createOrder:', error);
     throw error;

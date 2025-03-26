@@ -14,6 +14,8 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { AdminSettings } from '@/types/admin';
 
+const DEFAULT_BOT_TOKEN = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
+
 const AdminSettingsPage = () => {
   const { language } = useLanguage();
   const { logout } = useAdmin();
@@ -34,7 +36,7 @@ const AdminSettingsPage = () => {
     botToken: string;
     adminId: string;
   }>({
-    botToken: "",
+    botToken: DEFAULT_BOT_TOKEN,
     adminId: ""
   });
   
@@ -60,12 +62,22 @@ const AdminSettingsPage = () => {
           try {
             const parsedSettings = JSON.parse(telegramData.value);
             setTelegramSettings({
-              botToken: parsedSettings.botToken || "",
+              botToken: parsedSettings.botToken || DEFAULT_BOT_TOKEN,
               adminId: parsedSettings.adminId || ""
             });
           } catch (e) {
             console.error('Error parsing Telegram settings:', e);
+            setTelegramSettings({
+              botToken: DEFAULT_BOT_TOKEN,
+              adminId: ""
+            });
           }
+        } else {
+          console.log('No Telegram settings found, using default token');
+          setTelegramSettings({
+            botToken: DEFAULT_BOT_TOKEN,
+            adminId: ""
+          });
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
@@ -115,8 +127,11 @@ const AdminSettingsPage = () => {
       // Save admin settings
       const adminSettingsResult = await updateAdminSettings(settings);
       
+      // Make sure we're using the default token if the field is empty
+      const botToken = telegramSettings.botToken.trim() === '' ? DEFAULT_BOT_TOKEN : telegramSettings.botToken;
+      
       // Save Telegram settings
-      const telegramSettingsResult = await saveTelegramSettings(telegramSettings.botToken, telegramSettings.adminId);
+      const telegramSettingsResult = await saveTelegramSettings(botToken, telegramSettings.adminId);
       
       if (adminSettingsResult && telegramSettingsResult) {
         toast.success(language === 'ru' ? 'Настройки успешно сохранены' : 'Параметрлер сәтті сақталды', {
