@@ -97,22 +97,22 @@ export default function Home() {
               <CategoryCard 
                 slug="livingroom"
                 title={language === 'ru' ? 'Гостиная' : 'Қонақ бөлмесі'}
-                imageUrl="/images/categories/livingroom.jpg"
+                index={0}
               />
               <CategoryCard 
                 slug="bedroom"
                 title={language === 'ru' ? 'Спальня' : 'Жатын бөлме'}
-                imageUrl="/images/categories/bedroom.jpg"
+                index={1}
               />
               <CategoryCard 
                 slug="kitchen"
                 title={language === 'ru' ? 'Кухня' : 'Ас үй'}
-                imageUrl="/images/categories/kitchen.jpg"
+                index={2}
               />
               <CategoryCard 
                 slug="office"
                 title={language === 'ru' ? 'Офис' : 'Кеңсе'}
-                imageUrl="/images/categories/office.jpg"
+                index={3}
               />
             </div>
             
