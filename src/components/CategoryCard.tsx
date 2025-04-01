@@ -23,6 +23,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 }) => {
   const { language } = useLanguage();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Determine values based on whether we're using a category object or direct props
   const categoryName = category ? category.name[language] : title;
@@ -56,8 +57,15 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
       >
         <div className="aspect-square relative overflow-hidden">
           {/* Background placeholder/loader */}
-          {!isImageLoaded && (
+          {!isImageLoaded && !hasError && (
             <div className="absolute inset-0 bg-furniture-accent/30 animate-pulse"></div>
+          )}
+          
+          {/* Fallback for image errors */}
+          {hasError && (
+            <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+              <div className="text-gray-400 text-sm">{categoryName}</div>
+            </div>
           )}
           
           {/* Category image */}
@@ -65,9 +73,13 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
             src={categoryImage} 
             alt={categoryName || ''} 
             className={`w-full h-full object-cover transition-all duration-700 ease-out-expo group-hover:scale-105 ${
-              isImageLoaded ? 'opacity-100' : 'opacity-0'
+              isImageLoaded && !hasError ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => setIsImageLoaded(true)}
+            onError={() => {
+              setHasError(true);
+              setIsImageLoaded(false);
+            }}
           />
           
           {/* Overlay gradient */}

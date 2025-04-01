@@ -17,6 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   const { language, t } = useLanguage();
   const { addItem } = useCart();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Format price with thousand separators
   const formattedPrice = product.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -41,6 +42,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
     addItem(product);
   };
 
+  // Default image if none available
+  const productImage = product.images && product.images.length > 0 
+    ? product.images[0] 
+    : 'https://via.placeholder.com/300x300?text=No+Image';
+
   return (
     <motion.div 
       variants={cardVariants}
@@ -54,16 +60,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
           {/* Product image */}
           <div className="relative aspect-square overflow-hidden bg-furniture-accent/20">
             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              {!isImageLoaded && (
+              {!isImageLoaded && !hasError && (
                 <div className="animate-pulse w-full h-full bg-furniture-accent/30"></div>
               )}
+              
+              {/* Fallback for image errors */}
+              {hasError && (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <div className="text-gray-400 text-sm">{language === 'ru' ? product.name : (product.nameKz || product.name)}</div>
+                </div>
+              )}
+              
               <img 
-                src={product.images[0]} 
+                src={productImage} 
                 alt={language === 'ru' ? product.name : (product.nameKz || product.name)}
                 className={`w-full h-full object-cover transition-all duration-500 ease-out-expo ${
-                  isImageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                  isImageLoaded && !hasError ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                 }`}
                 onLoad={() => setIsImageLoaded(true)}
+                onError={() => {
+                  setHasError(true);
+                  setIsImageLoaded(false);
+                  console.error('Failed to load image:', productImage);
+                }}
               />
             </div>
             

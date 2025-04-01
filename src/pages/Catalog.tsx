@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import ProductGrid from '@/components/ProductGrid';
 import { getProductsByCategory, getCategoryBySlug, categories, products } from '@/data/products';
 import { useLanguage } from '@/contexts/LanguageContext';
+import CategoryCard from '@/components/CategoryCard';
 
 const Catalog = () => {
   const { categorySlug } = useParams<{ categorySlug?: string }>();
@@ -51,23 +52,12 @@ const Catalog = () => {
             {!categorySlug && (
               <div className="mb-8">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  {categories.map((cat) => (
-                    <a 
+                  {categories.map((cat, index) => (
+                    <CategoryCard 
                       key={cat.id}
-                      href={`/catalog/${cat.slug}`}
-                      className="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-all duration-300 hover:translate-y-[-2px]"
-                    >
-                      <div className="w-12 h-12 mx-auto mb-2">
-                        <img 
-                          src={cat.image} 
-                          alt={cat.name[language]} 
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                      </div>
-                      <p className="text-furniture-primary font-medium text-sm">
-                        {cat.name[language]}
-                      </p>
-                    </a>
+                      category={cat}
+                      index={index}
+                    />
                   ))}
                 </div>
               </div>
