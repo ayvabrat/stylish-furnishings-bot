@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -11,15 +11,13 @@ interface CategoryCardProps {
   // Support for direct usage without a category object
   slug?: string;
   title?: string;
-  imageUrl?: string;
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ 
   category, 
   index = 0, 
   slug, 
-  title, 
-  imageUrl 
+  title
 }) => {
   const { language } = useLanguage();
 
@@ -58,7 +56,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         className="block rounded-lg overflow-hidden group relative shadow-sm hover:shadow-md transition-all duration-300"
       >
         <div className="aspect-square relative overflow-hidden">
-          {/* Color block instead of image */}
+          {/* Solid color block */}
           <div className={`w-full h-full ${bgColor} opacity-80 group-hover:opacity-90 transition-opacity`}></div>
           
           {/* Overlay gradient */}

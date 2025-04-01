@@ -99,11 +99,11 @@ export const createOrder = async (orderData: {
       console.error('Failed to send Telegram notification:', telegramError);
     }
     
-    // Create payment details to return
+    // Create payment details to return with updated Kaspi Bank information
     const paymentDetails = {
-      recipient: "ИП Мебельная компания",
-      bankAccount: "KZ123456789012345678",
-      bankName: "Kaspi Bank",
+      recipient: "ALEXANDR FERBER",
+      bankAccount: "4400 4300 2337 5964",
+      bankName: "KASPI BANK",
       bic: "CASPKZKA",
       amount: orderData.totalAmount,
       reference: `Order #${shortOrderId}`

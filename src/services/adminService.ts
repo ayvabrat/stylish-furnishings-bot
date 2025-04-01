@@ -7,9 +7,9 @@ import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 // Default settings
 const defaultSettings: AdminSettings = {
   paymentDetails: {
-    bankName: 'Казкоммерцбанк',
-    accountNumber: 'KZ123456789012345678',
-    recipientName: 'ТОО "ProMebel"'
+    bankName: 'KASPI BANK',
+    accountNumber: '4400 4300 2337 5964',
+    recipientName: 'ALEXANDR FERBER'
   },
   contactInfo: {
     phone: '+7 777 123 4567',
