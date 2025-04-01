@@ -33,7 +33,6 @@ const CheckoutPage = () => {
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
   
-  // Form state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -42,7 +41,6 @@ const CheckoutPage = () => {
   const [postalCode, setPostalCode] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
   
-  // Form errors
   const [errors, setErrors] = useState<{
     name?: string;
     phone?: string;
@@ -50,21 +48,27 @@ const CheckoutPage = () => {
     address?: string;
   }>({});
   
-  // Load admin settings
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const settings = await fetchAdminSettings();
         setAdminSettings(settings);
+        setPaymentDetails({
+          recipient: settings.paymentDetails.recipientName,
+          bankAccount: settings.paymentDetails.accountNumber,
+          bankName: settings.paymentDetails.bankName,
+          bic: '',
+          amount: total,
+          reference: `Order from ${name}`
+        });
       } catch (error) {
         console.error('Failed to load admin settings:', error);
       }
     };
     
     loadSettings();
-  }, []);
-
-  // Cleanup progress interval on unmount
+  }, [total, name]);
+  
   useEffect(() => {
     return () => {
       if (progressInterval) {
@@ -73,7 +77,6 @@ const CheckoutPage = () => {
     };
   }, [progressInterval]);
   
-  // Calculate total amount
   const subtotal = calculateSubtotal();
   const discountAmount = activePromotion ? calculateDiscountedAmount(subtotal) : 0;
   const total = subtotal - discountAmount;
@@ -129,21 +132,19 @@ const CheckoutPage = () => {
     setShowPaymentDialog(true);
     setProgressValue(0);
     
-    // Start progress animation
     const interval = setInterval(() => {
       setProgressValue(prev => {
         if (prev >= 99) {
           clearInterval(interval);
           return 100;
         }
-        return prev + (100 / 150); // 15 seconds total (100 / 150 = ~0.67% per 100ms)
+        return prev + (100 / 150);
       });
     }, 100);
     
     setProgressInterval(interval);
     
     try {
-      // Create order items from cart items
       const orderItems = items.map(item => ({
         productId: item.id,
         productName: language === 'ru' ? item.name : item.nameKz,
@@ -151,7 +152,6 @@ const CheckoutPage = () => {
         price: item.price
       }));
       
-      // Create order with the correct parameter names
       const orderData = {
         customerName: name,
         customerPhone: phone,
@@ -169,18 +169,14 @@ const CheckoutPage = () => {
       
       console.log('Submitting order:', orderData);
       
-      // Send order to backend
       const response = await createOrder(orderData);
       
       console.log('Order created with ID:', response.orderId);
       
-      // Set payment details
       setPaymentDetails(response.paymentDetails);
       
-      // Set progress to 100% when done
       setProgressValue(100);
       
-      // Clear cart
       clearCart();
       
       toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
@@ -431,7 +427,6 @@ const CheckoutPage = () => {
         </div>
       </div>
 
-      {/* Payment Processing Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
@@ -469,22 +464,39 @@ const CheckoutPage = () => {
                 <>
                   <div className="grid grid-cols-3 gap-1 text-sm">
                     <div className="font-medium text-gray-500">{language === 'ru' ? 'Получатель' : 'Алушы'}</div>
-                    <div className="col-span-2 font-medium">{paymentDetails.recipient}</div>
+                    <div className="col-span-2 font-medium cursor-pointer hover:bg-gray-100 p-1 rounded" 
+                         onClick={() => {navigator.clipboard.writeText(paymentDetails.recipient); 
+                                         toast.success(language === 'ru' ? 'Скопировано!' : 'Көшірілді!');}}>
+                      {paymentDetails.recipient}
+                    </div>
                     
                     <div className="font-medium text-gray-500">{language === 'ru' ? 'Номер счета' : 'Шот нөмірі'}</div>
-                    <div className="col-span-2 font-medium">{paymentDetails.bankAccount}</div>
+                    <div className="col-span-2 font-medium cursor-pointer hover:bg-gray-100 p-1 rounded" 
+                         onClick={() => {navigator.clipboard.writeText(paymentDetails.bankAccount); 
+                                         toast.success(language === 'ru' ? 'Скопировано!' : 'Көшірілді!');}}>
+                      {paymentDetails.bankAccount}
+                    </div>
                     
                     <div className="font-medium text-gray-500">{language === 'ru' ? 'Банк' : 'Банк'}</div>
-                    <div className="col-span-2 font-medium">{paymentDetails.bankName}</div>
-                    
-                    <div className="font-medium text-gray-500">BIC</div>
-                    <div className="col-span-2 font-medium">{paymentDetails.bic}</div>
+                    <div className="col-span-2 font-medium cursor-pointer hover:bg-gray-100 p-1 rounded" 
+                         onClick={() => {navigator.clipboard.writeText(paymentDetails.bankName); 
+                                         toast.success(language === 'ru' ? 'Скопировано!' : 'Көшірілді!');}}>
+                      {paymentDetails.bankName}
+                    </div>
                     
                     <div className="font-medium text-gray-500">{language === 'ru' ? 'Сумма' : 'Сома'}</div>
-                    <div className="col-span-2 font-medium">{formatPrice(paymentDetails.amount)}</div>
+                    <div className="col-span-2 font-medium cursor-pointer hover:bg-gray-100 p-1 rounded" 
+                         onClick={() => {navigator.clipboard.writeText(formatPrice(paymentDetails.amount).toString()); 
+                                         toast.success(language === 'ru' ? 'Скопировано!' : 'Көшірілді!');}}>
+                      {formatPrice(paymentDetails.amount)}
+                    </div>
                     
                     <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Тағайындау'}</div>
-                    <div className="col-span-2 font-medium">{paymentDetails.reference}</div>
+                    <div className="col-span-2 font-medium cursor-pointer hover:bg-gray-100 p-1 rounded" 
+                         onClick={() => {navigator.clipboard.writeText(paymentDetails.reference); 
+                                         toast.success(language === 'ru' ? 'Скопировано!' : 'Көшірілді!');}}>
+                      {paymentDetails.reference}
+                    </div>
                   </div>
                   
                   <div className="pt-4 mt-4 border-t">
