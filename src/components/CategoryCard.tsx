@@ -78,7 +78,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
             onLoad={() => setIsImageLoaded(true)}
             onError={() => {
               setHasError(true);
-              setIsImageLoaded(false);
+              setIsImageLoaded(true); // Also set as loaded to remove loading animation
             }}
           />
           

@@ -50,8 +50,10 @@ export const createOrder = async (orderData: {
     }
     
     if (!order) {
-      throw new Error('Failed to create order');
+      throw new Error('Failed to create order - no order data returned');
     }
+    
+    console.log('Order created successfully:', order);
     
     // Then, create order items
     const orderItems = orderData.items.map(item => ({
@@ -95,8 +97,15 @@ export const createOrder = async (orderData: {
     }
     
     return order.id;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in createOrder:', error);
-    throw error;
+    const errorMessage = error.message || 'Unknown error occurred';
+    
+    // Provide more detailed logging
+    if (error.details) {
+      console.error('Error details:', error.details);
+    }
+    
+    throw new Error(`Failed to create order: ${errorMessage}`);
   }
 };

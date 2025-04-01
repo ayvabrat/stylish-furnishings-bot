@@ -53,7 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
-      className="group"
+      className="group h-full"
     >
       <Link to={`/product/${product.id}`} className="block h-full">
         <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] h-full flex flex-col">
@@ -80,8 +80,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
                 onLoad={() => setIsImageLoaded(true)}
                 onError={() => {
                   setHasError(true);
-                  setIsImageLoaded(false);
-                  console.error('Failed to load image:', productImage);
+                  setIsImageLoaded(true);
                 }}
               />
             </div>
