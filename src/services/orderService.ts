@@ -26,6 +26,9 @@ export const createOrder = async (orderData: {
   console.log('Creating order with data:', orderData);
   
   try {
+    // Simulate 15 second delay
+    await new Promise(resolve => setTimeout(resolve, 15000));
+    
     // First, create the order record with snake_case keys
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -96,7 +99,20 @@ export const createOrder = async (orderData: {
       console.error('Failed to send Telegram notification:', telegramError);
     }
     
-    return order.id;
+    // Create payment details to return
+    const paymentDetails = {
+      recipient: "ИП Мебельная компания",
+      bankAccount: "KZ123456789012345678",
+      bankName: "Kaspi Bank",
+      bic: "CASPKZKA",
+      amount: orderData.totalAmount,
+      reference: `Order #${shortOrderId}`
+    };
+    
+    return {
+      orderId: order.id,
+      paymentDetails
+    };
   } catch (error: any) {
     console.error('Error in createOrder:', error);
     const errorMessage = error.message || 'Unknown error occurred';

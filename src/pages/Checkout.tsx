@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -7,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
@@ -27,6 +28,10 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'bank_transfer'>('bank_transfer');
   const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
+  const [progressValue, setProgressValue] = useState(0);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
   
   // Form state
   const [name, setName] = useState('');
@@ -58,6 +63,15 @@ const CheckoutPage = () => {
     
     loadSettings();
   }, []);
+
+  // Cleanup progress interval on unmount
+  useEffect(() => {
+    return () => {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+    };
+  }, [progressInterval]);
   
   // Calculate total amount
   const subtotal = calculateSubtotal();
@@ -112,6 +126,21 @@ const CheckoutPage = () => {
     }
     
     setIsSubmitting(true);
+    setShowPaymentDialog(true);
+    setProgressValue(0);
+    
+    // Start progress animation
+    const interval = setInterval(() => {
+      setProgressValue(prev => {
+        if (prev >= 99) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + (100 / 150); // 15 seconds total (100 / 150 = ~0.67% per 100ms)
+      });
+    }, 100);
+    
+    setProgressInterval(interval);
     
     try {
       // Create order items from cart items
@@ -141,20 +170,18 @@ const CheckoutPage = () => {
       console.log('Submitting order:', orderData);
       
       // Send order to backend
-      const orderId = await createOrder(orderData);
+      const response = await createOrder(orderData);
       
-      console.log('Order created with ID:', orderId);
+      console.log('Order created with ID:', response.orderId);
       
-      // Clear cart and redirect to success page
+      // Set payment details
+      setPaymentDetails(response.paymentDetails);
+      
+      // Set progress to 100% when done
+      setProgressValue(100);
+      
+      // Clear cart
       clearCart();
-      
-      navigate('/checkout/success', {
-        state: {
-          orderId,
-          paymentMethod,
-          total
-        }
-      });
       
       toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
         duration: 3000
@@ -164,9 +191,18 @@ const CheckoutPage = () => {
       toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырысты рәсімдеу кезінде қате', {
         duration: 3000
       });
+      setShowPaymentDialog(false);
     } finally {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setShowPaymentDialog(false);
+    navigate('/');
   };
   
   return (
@@ -322,7 +358,7 @@ const CheckoutPage = () => {
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         {language === 'ru' ? 'Оформление...' : 'Рәсімделуде...'}
                       </>
                     ) : (
@@ -394,6 +430,83 @@ const CheckoutPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Processing Dialog */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>
+              {progressValue < 100 
+                ? language === 'ru' ? 'Обработка заказа' : 'Тапсырысты өңдеу'
+                : language === 'ru' ? 'Информация об оплате' : 'Төлем туралы ақпарат'
+              }
+            </DialogTitle>
+            <DialogDescription>
+              {progressValue < 100 
+                ? language === 'ru' 
+                  ? 'Пожалуйста, подождите, пока мы обрабатываем ваш заказ...' 
+                  : 'Тапсырысыңызды өңдеу барысында күте тұрыңыз...'
+                : language === 'ru'
+                  ? 'Используйте следующие реквизиты для оплаты заказа'
+                  : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          {progressValue < 100 ? (
+            <div className="space-y-6 py-4">
+              <div className="space-y-2">
+                <Progress value={progressValue} className="h-2" />
+                <p className="text-sm text-center text-gray-500">{Math.round(progressValue)}%</p>
+              </div>
+              <div className="flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              {paymentDetails && (
+                <>
+                  <div className="grid grid-cols-3 gap-1 text-sm">
+                    <div className="font-medium text-gray-500">{language === 'ru' ? 'Получатель' : 'Алушы'}</div>
+                    <div className="col-span-2 font-medium">{paymentDetails.recipient}</div>
+                    
+                    <div className="font-medium text-gray-500">{language === 'ru' ? 'Номер счета' : 'Шот нөмірі'}</div>
+                    <div className="col-span-2 font-medium">{paymentDetails.bankAccount}</div>
+                    
+                    <div className="font-medium text-gray-500">{language === 'ru' ? 'Банк' : 'Банк'}</div>
+                    <div className="col-span-2 font-medium">{paymentDetails.bankName}</div>
+                    
+                    <div className="font-medium text-gray-500">BIC</div>
+                    <div className="col-span-2 font-medium">{paymentDetails.bic}</div>
+                    
+                    <div className="font-medium text-gray-500">{language === 'ru' ? 'Сумма' : 'Сома'}</div>
+                    <div className="col-span-2 font-medium">{formatPrice(paymentDetails.amount)}</div>
+                    
+                    <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Тағайындау'}</div>
+                    <div className="col-span-2 font-medium">{paymentDetails.reference}</div>
+                  </div>
+                  
+                  <div className="pt-4 mt-4 border-t">
+                    <p className="text-sm text-gray-500">
+                      {language === 'ru' 
+                        ? 'После совершения платежа, пожалуйста, сохраните квитанцию. Мы свяжемся с вами для подтверждения заказа.'
+                        : 'Төлем жасағаннан кейін түбіртекті сақтап қойыңыз. Тапсырысты растау үшін сізбен байланысамыз.'
+                      }
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button onClick={handleCloseDialog}>
+                      {language === 'ru' ? 'Закрыть' : 'Жабу'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
