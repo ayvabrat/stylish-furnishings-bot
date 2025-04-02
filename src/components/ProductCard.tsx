@@ -46,6 +46,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   const productImage = product.images && product.images.length > 0 
     ? product.images[0] 
     : 'https://via.placeholder.com/300x300?text=No+Image';
+  
+  // Format category display
+  const getCategoryName = () => {
+    // Check if it's a UUID format (category ID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(product.category)) {
+      return language === 'ru' ? 'Категория' : 'Санат';
+    }
+    
+    // If it's a regular category key, translate it
+    return t(`category.${product.category}`);
+  };
 
   return (
     <motion.div 
@@ -105,7 +117,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
               {language === 'ru' ? product.name : (product.nameKz || product.name)}
             </h3>
             <p className="text-furniture-secondary text-xs mb-2">
-              {t(`category.${product.category.replace('-', '')}`)}
+              {getCategoryName()}
             </p>
             <div className="mt-auto pt-2">
               <p className="font-semibold text-furniture-primary">
