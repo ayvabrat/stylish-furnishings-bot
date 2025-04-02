@@ -11,19 +11,22 @@ interface CategoryCardProps {
   // Support for direct usage without a category object
   slug?: string;
   title?: string;
+  imageUrl?: string; // Add this prop to support image backgrounds
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ 
   category, 
   index = 0, 
   slug, 
-  title
+  title,
+  imageUrl
 }) => {
   const { language } = useLanguage();
 
   // Determine values based on whether we're using a category object or direct props
   const categoryName = category ? category.name[language] : title;
   const categorySlug = category ? category.slug : slug;
+  const categoryImage = category?.image_url || imageUrl;
 
   // Generate a random color from furniture color palette
   const colors = ['bg-furniture-primary', 'bg-furniture-secondary', 'bg-furniture-accent', 'bg-furniture-neutral'];

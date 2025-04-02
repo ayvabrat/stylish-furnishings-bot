@@ -106,18 +106,18 @@ const AdminPromotions = () => {
       return;
     }
     
-    // Special handling for ALMATY20 - only allow enabling/disabling
-    if (promoCodeToEdit.code === 'ALMATY20') {
+    // Special handling for ALMATY2025 - only allow enabling/disabling
+    if (promoCodeToEdit.code === 'ALMATY2025') {
       if (!formActive) {
-        toast.error(language === 'ru' ? 'Нельзя деактивировать промокод ALMATY20' : 'ALMATY20 промокодын өшіруге болмайды');
+        toast.error(language === 'ru' ? 'Нельзя деактивировать промокод ALMATY2025' : 'ALMATY2025 промокодын өшіруге болмайды');
         return;
       }
-      if (discount !== 20) {
-        toast.error(language === 'ru' ? 'Нельзя изменить скидку для промокода ALMATY20' : 'ALMATY20 промокоды үшін жеңілдікті өзгертуге болмайды');
+      if (discount !== 5) {
+        toast.error(language === 'ru' ? 'Нельзя изменить скидку для промокода ALMATY2025' : 'ALMATY2025 промокоды үшін жеңілдікті өзгертуге болмайды');
         return;
       }
-      if (formCode !== 'ALMATY20') {
-        toast.error(language === 'ru' ? 'Нельзя изменить код промокода ALMATY20' : 'ALMATY20 промокод кодын өзгертуге болмайды');
+      if (formCode !== 'ALMATY2025') {
+        toast.error(language === 'ru' ? 'Нельзя изменить код промокода ALMATY2025' : 'ALMATY2025 промокод кодын өзгертуге болмайды');
         return;
       }
     }
@@ -153,9 +153,9 @@ const AdminPromotions = () => {
     // Find promo code to delete
     const promoToDelete = promoCodes.find(promo => promo.id === promoCodeToDelete);
     
-    // Don't allow deleting ALMATY20
-    if (promoToDelete && promoToDelete.code === 'ALMATY20') {
-      toast.error(language === 'ru' ? 'Нельзя удалить промокод ALMATY20' : 'ALMATY20 промокодын жоюға болмайды');
+    // Don't allow deleting ALMATY2025
+    if (promoToDelete && promoToDelete.code === 'ALMATY2025') {
+      toast.error(language === 'ru' ? 'Нельзя удалить промокод ALMATY2025' : 'ALMATY2025 промокодын жоюға болмайды');
       setPromoCodeToDelete(null);
       return;
     }

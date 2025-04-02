@@ -48,6 +48,10 @@ const CheckoutPage = () => {
     address?: string;
   }>({});
   
+  const subtotal = calculateSubtotal();
+  const discountAmount = activePromotion ? calculateDiscountedAmount(subtotal) : 0;
+  const total = subtotal - discountAmount;
+  
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -76,10 +80,6 @@ const CheckoutPage = () => {
       }
     };
   }, [progressInterval]);
-  
-  const subtotal = calculateSubtotal();
-  const discountAmount = activePromotion ? calculateDiscountedAmount(subtotal) : 0;
-  const total = subtotal - discountAmount;
   
   const validateForm = () => {
     const newErrors: {

@@ -1,35 +1,44 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { sendTelegramNotification } from '@/services/telegramService';
+import { CartItemType } from '@/types/product';
 
-// Create a new order
-export const createOrder = async (orderData: {
+interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+interface OrderData {
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
   city: string;
   deliveryAddress: string;
   postalCode: string | null;
-  additionalNotes: string | null;
   paymentMethod: string;
+  additionalNotes: string | null;
   totalAmount: number;
-  items: {
-    productId: string;
-    productName: string;
-    price: number;
-    quantity: number;
-  }[];
+  items: OrderItem[];
   promoCode: string | null;
-  discountAmount: number;
-}) => {
-  console.log('Creating order with data:', orderData);
-  
+  discountAmount: number | 0;
+}
+
+interface PaymentDetails {
+  recipient: string;
+  bankAccount: string;
+  bankName: string;
+  amount: number;
+  reference: string;
+}
+
+interface CreateOrderResponse {
+  orderId: string;
+  paymentDetails: PaymentDetails;
+}
+
+// Create order
+export const createOrder = async (orderData: OrderData): Promise<CreateOrderResponse> => {
   try {
-    // Simulate 15 second delay
-    await new Promise(resolve => setTimeout(resolve, 15000));
-    
-    // First, create the order record with snake_case keys
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -39,89 +48,56 @@ export const createOrder = async (orderData: {
         city: orderData.city,
         delivery_address: orderData.deliveryAddress,
         postal_code: orderData.postalCode,
-        additional_notes: orderData.additionalNotes,
         payment_method: orderData.paymentMethod,
+        additional_notes: orderData.additionalNotes,
         total_amount: orderData.totalAmount,
+        promo_code: orderData.promoCode,
+        discount_amount: orderData.discountAmount,
         status: 'pending'
       })
-      .select()
+      .select('id')
       .single();
-      
+
     if (orderError) {
       console.error('Error creating order:', orderError);
-      throw new Error(orderError.message);
+      throw new Error('Failed to create order');
     }
-    
-    if (!order) {
-      throw new Error('Failed to create order - no order data returned');
-    }
-    
-    console.log('Order created successfully:', order);
-    
-    // Then, create order items
+
+    const orderId = order.id;
+
+    // Insert order items
     const orderItems = orderData.items.map(item => ({
-      order_id: order.id,
+      order_id: orderId,
       product_id: item.productId,
       product_name: item.productName,
-      price: item.price,
-      quantity: item.quantity
+      quantity: item.quantity,
+      price: item.price
     }));
-    
-    const { error: itemsError } = await supabase
+
+    const { error: orderItemsError } = await supabase
       .from('order_items')
       .insert(orderItems);
-      
-    if (itemsError) {
-      console.error('Error creating order items:', itemsError);
-      throw new Error(itemsError.message);
+
+    if (orderItemsError) {
+      console.error('Error creating order items:', orderItemsError);
+      throw new Error('Failed to create order items');
     }
-    
-    // Generate a shortened order ID for display
-    const shortOrderId = order.id.substring(0, 8);
-    
-    // Send notification via Telegram
-    try {
-      console.log('Sending Telegram notification for order:', shortOrderId);
-      
-      await sendTelegramNotification({
-        orderNumber: shortOrderId,
-        customerName: orderData.customerName,
-        customerPhone: orderData.customerPhone,
-        totalAmount: orderData.totalAmount,
-        items: orderData.items.map(item => ({
-          name: item.productName,
-          quantity: item.quantity,
-          price: item.price
-        }))
-      });
-    } catch (telegramError) {
-      // Log the error but don't fail the order creation
-      console.error('Failed to send Telegram notification:', telegramError);
-    }
-    
-    // Create payment details to return with updated Kaspi Bank information
-    const paymentDetails = {
-      recipient: "ALEXANDR FERBER",
-      bankAccount: "4400 4300 2337 5964",
-      bankName: "KASPI BANK",
-      bic: "CASPKZKA",
+
+    // Payment details
+    const paymentDetails: PaymentDetails = {
+      recipient: 'Alexandr Ferber',
+      bankAccount: 'KZ44004300223375964',
+      bankName: 'Kaspi Bank',
       amount: orderData.totalAmount,
-      reference: `Order #${shortOrderId}`
+      reference: `Order #${orderId} from ${orderData.customerName}`
     };
-    
+
     return {
-      orderId: order.id,
-      paymentDetails
+      orderId: orderId.toString(),
+      paymentDetails: paymentDetails
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in createOrder:', error);
-    const errorMessage = error.message || 'Unknown error occurred';
-    
-    // Provide more detailed logging
-    if (error.details) {
-      console.error('Error details:', error.details);
-    }
-    
-    throw new Error(`Failed to create order: ${errorMessage}`);
+    throw error;
   }
 };

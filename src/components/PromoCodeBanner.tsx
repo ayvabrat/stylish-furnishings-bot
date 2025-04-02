@@ -10,7 +10,7 @@ const PromoCodeBanner: React.FC = () => {
   const { applyPromoCode } = usePromotion();
 
   const handleApplyPromo = async () => {
-    await applyPromoCode('ALMATY20');
+    await applyPromoCode('ALMATY2025');
   };
 
   return (
@@ -37,12 +37,12 @@ const PromoCodeBanner: React.FC = () => {
           <Tag className="h-5 w-5 text-amber-600 mr-3 mt-1 flex-shrink-0" />
           <div>
             <h3 className="font-bold text-lg text-amber-800">
-              {language === 'ru' ? 'СКИДКА 20% по промокоду' : 'Промокод бойынша 20% ЖЕҢІЛДІК'}
+              {language === 'ru' ? 'СКИДКА 5% по промокоду' : 'Промокод бойынша 5% ЖЕҢІЛДІК'}
             </h3>
             <p className="text-amber-700 mt-1">
               {language === 'ru' 
-                ? 'Используйте промокод ALMATY20 при оформлении заказа для получения скидки 20%' 
-                : 'Тапсырысты рәсімдеу кезінде 20% жеңілдік алу үшін ALMATY20 промокодын қолданыңыз'}
+                ? 'Используйте промокод ALMATY2025 при оформлении заказа для получения скидки 5%' 
+                : 'Тапсырысты рәсімдеу кезінде 5% жеңілдік алу үшін ALMATY2025 промокодын қолданыңыз'}
             </p>
           </div>
         </div>
