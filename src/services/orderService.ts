@@ -40,6 +40,7 @@ interface CreateOrderResponse {
 // Create order
 export const createOrder = async (orderData: OrderData): Promise<CreateOrderResponse> => {
   try {
+    // Remove discountAmount from the insert as it doesn't exist in the database schema
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -52,8 +53,7 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
         payment_method: orderData.paymentMethod,
         additional_notes: orderData.additionalNotes,
         total_amount: orderData.totalAmount,
-        promo_code: orderData.promoCode,
-        discount_amount: orderData.discountAmount,
+        // Remove promo_code and discount_amount as they don't exist in the schema
         status: 'pending'
       })
       .select('id')
