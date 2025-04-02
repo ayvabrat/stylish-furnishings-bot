@@ -1,4 +1,3 @@
-
 export interface ProductType {
   id: string;
   name: string;
@@ -27,4 +26,8 @@ export interface CategoryType {
   };
   image: string;
   slug: string;
+}
+
+export interface CartItemType extends ProductType {
+  quantity: number;
 }

@@ -26,7 +26,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   // Determine values based on whether we're using a category object or direct props
   const categoryName = category ? category.name[language] : title;
   const categorySlug = category ? category.slug : slug;
-  const categoryImage = category?.image_url || imageUrl;
+  const categoryImage = category?.image || imageUrl;
 
   // Generate a random color from furniture color palette
   const colors = ['bg-furniture-primary', 'bg-furniture-secondary', 'bg-furniture-accent', 'bg-furniture-neutral'];
