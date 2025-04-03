@@ -96,6 +96,7 @@ export type Database = {
           id: string
           payment_method: string
           postal_code: string | null
+          receipt_url: string | null
           status: string
           total_amount: number
         }
@@ -110,6 +111,7 @@ export type Database = {
           id?: string
           payment_method: string
           postal_code?: string | null
+          receipt_url?: string | null
           status?: string
           total_amount: number
         }
@@ -124,6 +126,7 @@ export type Database = {
           id?: string
           payment_method?: string
           postal_code?: string | null
+          receipt_url?: string | null
           status?: string
           total_amount?: number
         }
