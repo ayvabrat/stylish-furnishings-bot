@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CartItemType } from '@/types/product';
+import { fetchAdminSettings } from './adminService';
 
 interface OrderItem {
   productId: string;
@@ -20,8 +21,6 @@ interface OrderData {
   additionalNotes: string | null;
   totalAmount: number;
   items: OrderItem[];
-  promoCode: string | null;
-  discountAmount: number | 0;
 }
 
 interface PaymentDetails {
@@ -40,7 +39,10 @@ interface CreateOrderResponse {
 // Create order
 export const createOrder = async (orderData: OrderData): Promise<CreateOrderResponse> => {
   try {
-    // Remove discountAmount from the insert as it doesn't exist in the database schema
+    // Get admin settings for payment details
+    const adminSettings = await fetchAdminSettings();
+    
+    // Insert order into database
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -53,7 +55,6 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
         payment_method: orderData.paymentMethod,
         additional_notes: orderData.additionalNotes,
         total_amount: orderData.totalAmount,
-        // Remove promo_code and discount_amount as they don't exist in the schema
         status: 'pending'
       })
       .select('id')
@@ -61,7 +62,20 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
 
     if (orderError) {
       console.error('Error creating order:', orderError);
-      throw new Error('Failed to create order');
+      
+      // Even if there's an error, return payment details with a temporary ID
+      const paymentDetails: PaymentDetails = {
+        recipient: adminSettings.paymentDetails.recipientName,
+        bankAccount: adminSettings.paymentDetails.accountNumber,
+        bankName: adminSettings.paymentDetails.bankName,
+        amount: orderData.totalAmount,
+        reference: `Order from ${orderData.customerName}`
+      };
+      
+      return {
+        orderId: 'temporary',
+        paymentDetails: paymentDetails
+      };
     }
 
     const orderId = order.id;
@@ -81,14 +95,14 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
 
     if (orderItemsError) {
       console.error('Error creating order items:', orderItemsError);
-      throw new Error('Failed to create order items');
+      // Continue despite the error - we still want to show payment details
     }
 
     // Payment details
     const paymentDetails: PaymentDetails = {
-      recipient: 'Alexandr Ferber',
-      bankAccount: 'KZ44004300223375964',
-      bankName: 'Kaspi Bank',
+      recipient: adminSettings.paymentDetails.recipientName,
+      bankAccount: adminSettings.paymentDetails.accountNumber,
+      bankName: adminSettings.paymentDetails.bankName,
       amount: orderData.totalAmount,
       reference: `Order #${orderId} from ${orderData.customerName}`
     };
@@ -99,6 +113,38 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
     };
   } catch (error) {
     console.error('Error in createOrder:', error);
-    throw error;
+    
+    // Get admin settings for payment details even in case of error
+    try {
+      const adminSettings = await fetchAdminSettings();
+      
+      // Return fallback payment details
+      const paymentDetails: PaymentDetails = {
+        recipient: adminSettings.paymentDetails.recipientName,
+        bankAccount: adminSettings.paymentDetails.accountNumber,
+        bankName: adminSettings.paymentDetails.bankName,
+        amount: 0, // We don't know the amount in this case
+        reference: 'Order processing error'
+      };
+      
+      return {
+        orderId: 'error',
+        paymentDetails: paymentDetails
+      };
+    } catch (settingsError) {
+      console.error('Error fetching admin settings:', settingsError);
+      
+      // Ultimate fallback if we can't even get admin settings
+      return {
+        orderId: 'error',
+        paymentDetails: {
+          recipient: 'ALEXANDR FERBER',
+          bankAccount: 'KZ44004300223375964',
+          bankName: 'Kaspi Bank',
+          amount: 0,
+          reference: 'Order processing error'
+        }
+      };
+    }
   }
 };

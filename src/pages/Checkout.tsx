@@ -33,6 +33,7 @@ const CheckoutPage = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
   
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -137,16 +138,16 @@ const CheckoutPage = () => {
     }
     
     setIsSubmitting(true);
+    setOrderError(null);
     setShowPaymentDialog(true);
     setProgressValue(0);
     
     const interval = setInterval(() => {
       setProgressValue(prev => {
-        if (prev >= 99) {
-          clearInterval(interval);
-          return 100;
+        if (prev >= 95) {
+          return 95;
         }
-        return prev + (100 / 150);
+        return prev + (95 / 150);
       });
     }, 100);
     
@@ -170,9 +171,7 @@ const CheckoutPage = () => {
         paymentMethod: paymentMethod,
         additionalNotes: additionalNotes || null,
         totalAmount: total,
-        items: orderItems,
-        promoCode: activePromotion?.code || null,
-        discountAmount: discountAmount || 0
+        items: orderItems
       };
       
       console.log('Submitting order:', orderData);
@@ -185,17 +184,24 @@ const CheckoutPage = () => {
       
       setProgressValue(100);
       
-      clearCart();
-      
-      toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
-        duration: 3000
-      });
+      if (response.orderId !== 'error' && response.orderId !== 'temporary') {
+        clearCart();
+        
+        toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
+          duration: 3000
+        });
+      } else {
+        setOrderError(language === 'ru' 
+          ? 'Возникли проблемы при сохранении заказа, но вы можете продолжить оплату' 
+          : 'Тапсырысты сақтау кезінде проблемалар туындады, бірақ сіз төлемді жалғастыра аласыз');
+      }
     } catch (error) {
       console.error('Failed to create order:', error);
-      toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырысты рәсімдеу кезінде қате', {
-        duration: 3000
-      });
-      setShowPaymentDialog(false);
+      setOrderError(language === 'ru' 
+        ? 'Ошибка при оформлении заказа, но вы все равно можете выполнить оплату'
+        : 'Тапсырысты рәсімдеу кезінде қате, бірақ сіз бәрібір төлем жасай аласыз');
+      
+      setProgressValue(100);
     } finally {
       if (progressInterval) {
         clearInterval(progressInterval);
@@ -206,7 +212,9 @@ const CheckoutPage = () => {
 
   const handleCloseDialog = () => {
     setShowPaymentDialog(false);
-    navigate('/');
+    if (!orderError) {
+      navigate('/');
+    }
   };
   
   return (
@@ -469,6 +477,12 @@ const CheckoutPage = () => {
               </div>
             ) : (
               <div className="space-y-4 py-4">
+                {orderError && (
+                  <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-md mb-4">
+                    {orderError}
+                  </div>
+                )}
+                
                 {paymentDetails && (
                   <>
                     <div className="grid grid-cols-3 gap-1 text-sm">
