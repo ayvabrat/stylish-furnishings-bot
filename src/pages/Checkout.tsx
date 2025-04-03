@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Loader2, Copy } from 'lucide-react';
+import { CreditCard, Loader2, Copy, Upload, Check, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -14,7 +15,7 @@ import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
 import { usePromotion } from '@/contexts/PromotionContext';
-import { createOrder } from '@/services/orderService';
+import { createOrder, uploadReceiptImage } from '@/services/orderService';
 import { fetchAdminSettings } from '@/services/adminService';
 import { formatPrice } from '@/lib/utils';
 import PromoCodeInput from '@/components/PromoCodeInput';
@@ -34,6 +35,13 @@ const CheckoutPage = () => {
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [showPaymentInfo, setShowPaymentInfo] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -141,6 +149,7 @@ const CheckoutPage = () => {
     setOrderError(null);
     setShowPaymentDialog(true);
     setProgressValue(0);
+    setShowPaymentInfo(false);
     
     const interval = setInterval(() => {
       setProgressValue(prev => {
@@ -180,9 +189,14 @@ const CheckoutPage = () => {
       
       console.log('Order created with ID:', response.orderId);
       
+      setOrderId(response.orderId);
       setPaymentDetails(response.paymentDetails);
-      
       setProgressValue(100);
+      
+      // Start the 15-second timer for showing payment details
+      setTimeout(() => {
+        setShowPaymentInfo(true);
+      }, 15000);
       
       if (response.orderId !== 'error' && response.orderId !== 'temporary') {
         clearCart();
@@ -202,6 +216,11 @@ const CheckoutPage = () => {
         : 'Тапсырысты рәсімдеу кезінде қате, бірақ сіз бәрібір төлем жасай аласыз');
       
       setProgressValue(100);
+      
+      // Even on error, show payment details after 15 seconds
+      setTimeout(() => {
+        setShowPaymentInfo(true);
+      }, 15000);
     } finally {
       if (progressInterval) {
         clearInterval(progressInterval);
@@ -212,9 +231,66 @@ const CheckoutPage = () => {
 
   const handleCloseDialog = () => {
     setShowPaymentDialog(false);
-    if (!orderError) {
+    if (!orderError && paymentComplete) {
       navigate('/');
     }
+  };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setReceiptFile(e.target.files[0]);
+    }
+  };
+  
+  const handleUploadReceipt = async () => {
+    if (!receiptFile || !orderId) return;
+    
+    setUploadingReceipt(true);
+    try {
+      const result = await uploadReceiptImage(orderId, receiptFile);
+      
+      if (result.success) {
+        toast.success(
+          language === 'ru' 
+            ? 'Чек успешно загружен!' 
+            : 'Түбіртек сәтті жүктелді!',
+          { duration: 3000 }
+        );
+      } else {
+        toast.error(
+          language === 'ru' 
+            ? `Ошибка при загрузке чека: ${result.error}` 
+            : `Түбіртекті жүктеу кезінде қате: ${result.error}`,
+          { duration: 3000 }
+        );
+      }
+    } catch (error) {
+      console.error('Error uploading receipt:', error);
+      toast.error(
+        language === 'ru' 
+          ? 'Не удалось загрузить чек' 
+          : 'Түбіртекті жүктеу мүмкін болмады',
+        { duration: 3000 }
+      );
+    } finally {
+      setUploadingReceipt(false);
+    }
+  };
+  
+  const handlePaymentComplete = () => {
+    setPaymentComplete(true);
+    toast.success(
+      language === 'ru' 
+        ? 'Спасибо за оплату! Мы свяжемся с вами для подтверждения заказа.' 
+        : 'Төлем жасағаныңыз үшін рахмет! Тапсырысты растау үшін сізбен байланысамыз.',
+      { duration: 5000 }
+    );
+    
+    // Close dialog automatically after 2 seconds
+    setTimeout(() => {
+      setShowPaymentDialog(false);
+      navigate('/');
+    }, 2000);
   };
   
   return (
@@ -458,9 +534,13 @@ const CheckoutPage = () => {
                   ? language === 'ru' 
                     ? 'Пожалуйста, подождите, пока мы обрабатываем ваш заказ...' 
                     : 'Тапсырысыңызды өңдеу барысында күте тұрыңыз...'
-                  : language === 'ru'
-                    ? 'Используйте следующие реквизиты для оплаты заказа'
-                    : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
+                  : !showPaymentInfo
+                    ? language === 'ru'
+                      ? 'Подготовка платежной информации...'
+                      : 'Төлем ақпаратын дайындау...'
+                    : language === 'ru'
+                      ? 'Используйте следующие реквизиты для оплаты заказа'
+                      : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
                 }
               </DialogDescription>
             </DialogHeader>
@@ -474,6 +554,17 @@ const CheckoutPage = () => {
                 <div className="flex justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
                 </div>
+              </div>
+            ) : !showPaymentInfo ? (
+              <div className="space-y-6 py-4">
+                <div className="flex justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
+                </div>
+                <p className="text-center text-sm text-gray-500">
+                  {language === 'ru' 
+                    ? 'Пожалуйста, подождите, информация об оплате появится через несколько секунд...' 
+                    : 'Өтінеміз, күте тұрыңыз, төлем туралы ақпарат бірнеше секундтан кейін пайда болады...'}
+                </p>
               </div>
             ) : (
               <div className="space-y-4 py-4">
@@ -588,16 +679,74 @@ const CheckoutPage = () => {
                     </div>
                     
                     <div className="pt-4 mt-4 border-t">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 mb-4">
                         {language === 'ru' 
-                          ? 'После совершения платежа, пожалуйста, сохраните квитанцию. Мы свяжемся с вами для подтверждения заказа.'
-                          : 'Төлем жасағаннан кейін түбіртекті сақтап қойыңыз. Тапсырысты растау үшін сізбен байланысамыз.'
-                        }
+                          ? 'После совершения платежа, пожалуйста, прикрепите чек об оплате.' 
+                          : 'Төлем жасағаннан кейін, төлем түбіртегін бекітіңіз.'}
                       </p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <input
+                            type="file"
+                            id="receipt"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept="image/*,.pdf"
+                          />
+                          <div className="flex flex-wrap gap-3">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={uploadingReceipt}
+                              className="flex-1"
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              {language === 'ru' ? 'Прикрепить чек' : 'Түбіртекті тіркеу'}
+                            </Button>
+                            
+                            {receiptFile && (
+                              <Button 
+                                type="button" 
+                                variant="secondary" 
+                                onClick={handleUploadReceipt}
+                                disabled={uploadingReceipt}
+                                className="flex-1"
+                              >
+                                {uploadingReceipt ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Check className="h-4 w-4 mr-2" />
+                                )}
+                                {language === 'ru' ? 'Загрузить' : 'Жүктеу'}
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {receiptFile && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              {language === 'ru' ? 'Выбран файл:' : 'Таңдалған файл:'} {receiptFile.name}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Button 
+                          className="w-full" 
+                          onClick={handlePaymentComplete}
+                          disabled={paymentComplete}
+                        >
+                          {paymentComplete ? (
+                            <Check className="h-4 w-4 mr-2" />
+                          ) : null}
+                          {language === 'ru' ? 'Я оплатил(а)' : 'Мен төледім'}
+                        </Button>
+                      </div>
                     </div>
                     
-                    <div className="flex justify-end">
-                      <Button onClick={handleCloseDialog}>
+                    <div className="flex justify-end mt-4 pt-4 border-t">
+                      <Button variant="outline" onClick={handleCloseDialog}>
                         {language === 'ru' ? 'Закрыть' : 'Жабу'}
                       </Button>
                     </div>
@@ -608,6 +757,16 @@ const CheckoutPage = () => {
           </DialogContent>
         </Dialog>
       </TooltipProvider>
+      
+      {/* Hidden file input */}
+      <input
+        type="file"
+        id="receipt"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*,.pdf"
+      />
     </Layout>
   );
 };

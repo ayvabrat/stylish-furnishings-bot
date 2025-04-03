@@ -21,6 +21,7 @@ interface OrderData {
   additionalNotes: string | null;
   totalAmount: number;
   items: OrderItem[];
+  receiptImage?: File | null;
 }
 
 interface PaymentDetails {
@@ -146,5 +147,39 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
         }
       };
     }
+  }
+};
+
+// Upload receipt image
+export const uploadReceiptImage = async (orderId: string, file: File): Promise<{ success: boolean, error?: string }> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${orderId}-${Date.now()}.${fileExt}`;
+    const filePath = `receipts/${fileName}`;
+    
+    const { error } = await supabase.storage
+      .from('order-receipts')
+      .upload(filePath, file);
+    
+    if (error) {
+      console.error('Error uploading receipt:', error);
+      return { success: false, error: error.message };
+    }
+    
+    // Update the order with receipt URL
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ receipt_url: filePath })
+      .eq('id', orderId);
+      
+    if (updateError) {
+      console.error('Error updating order with receipt URL:', updateError);
+      return { success: false, error: updateError.message };
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in uploadReceiptImage:', error);
+    return { success: false, error: error.message };
   }
 };
