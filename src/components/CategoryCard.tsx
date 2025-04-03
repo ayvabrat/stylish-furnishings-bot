@@ -26,8 +26,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   // Determine values based on whether we're using a category object or direct props
   const categoryName = category ? category.name[language] : title;
   const categorySlug = category ? category.slug : slug;
-  const categoryImage = category?.image || imageUrl;
-
+  
   // Generate a random color from furniture color palette
   const colors = ['bg-furniture-primary', 'bg-furniture-secondary', 'bg-furniture-accent', 'bg-furniture-neutral'];
   const colorIndex = (index || 0) % colors.length;
@@ -58,6 +57,19 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     }
   };
 
+  // Предопределенные изображения для категорий
+  const categoryImages = {
+    livingroom: "/images/categories/livingroom.jpg",
+    bedroom: "/images/categories/bedroom.jpg",
+    kitchen: "/images/categories/kitchen.jpg",
+    office: "/images/categories/office.jpg",
+  };
+  
+  // Выбор изображения в зависимости от slug
+  const backgroundImage = categorySlug && categorySlug in categoryImages 
+    ? `url(${categoryImages[categorySlug as keyof typeof categoryImages]})` 
+    : undefined;
+
   return (
     <motion.div 
       variants={cardVariants}
@@ -70,10 +82,15 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         className="block rounded-lg overflow-hidden group relative shadow-sm hover:shadow-md transition-all duration-300"
       >
         <div className="aspect-square relative overflow-hidden">
-          {/* Colored block with pattern background */}
+          {/* Цветной блок с фоном или изображением */}
           <div 
             className={`w-full h-full ${bgColor} opacity-80 group-hover:opacity-90 transition-opacity`}
-            style={{ backgroundImage: backgroundPattern, backgroundRepeat: 'repeat' }}
+            style={{ 
+              backgroundImage: backgroundImage || backgroundPattern, 
+              backgroundSize: backgroundImage ? 'cover' : 'auto',
+              backgroundPosition: 'center',
+              backgroundRepeat: backgroundImage ? 'no-repeat' : 'repeat' 
+            }}
           ></div>
           
           {/* Overlay gradient */}

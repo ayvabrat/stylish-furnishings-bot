@@ -68,13 +68,9 @@ export default function Home() {
               </div>
               <div className="hidden md:block">
                 <img 
-                  src="/images/hero-furniture.jpg" 
+                  src="/public/lovable-uploads/92935515-9b18-4cba-8af2-aebe0e7fb2bc.png" 
                   alt={language === 'ru' ? 'Современная мебель' : 'Заманауи жиһаз'} 
-                  className="w-full h-auto rounded-lg shadow-xl"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.svg';
-                  }}
+                  className="w-full h-auto rounded-lg shadow-xl object-cover"
                 />
               </div>
             </div>
