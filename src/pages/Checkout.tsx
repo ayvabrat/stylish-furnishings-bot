@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -40,6 +39,7 @@ const CheckoutPage = () => {
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [loadingOrder, setLoadingOrder] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -150,15 +150,16 @@ const CheckoutPage = () => {
     setShowPaymentDialog(true);
     setProgressValue(0);
     setShowPaymentInfo(false);
+    setLoadingOrder(true);
     
     const interval = setInterval(() => {
       setProgressValue(prev => {
-        if (prev >= 95) {
-          return 95;
+        if (prev >= 80) {
+          return 80;
         }
-        return prev + (95 / 150);
+        return prev + 5;
       });
-    }, 100);
+    }, 200);
     
     setProgressInterval(interval);
     
@@ -192,11 +193,8 @@ const CheckoutPage = () => {
       setOrderId(response.orderId);
       setPaymentDetails(response.paymentDetails);
       setProgressValue(100);
-      
-      // Start the 15-second timer for showing payment details
-      setTimeout(() => {
-        setShowPaymentInfo(true);
-      }, 15000);
+      setShowPaymentInfo(true);
+      setLoadingOrder(false);
       
       if (response.orderId !== 'error' && response.orderId !== 'temporary') {
         clearCart();
@@ -216,11 +214,8 @@ const CheckoutPage = () => {
         : 'Тапсырысты рәсімдеу кезінде қате, бірақ сіз бәрібір төлем жасай аласыз');
       
       setProgressValue(100);
-      
-      // Even on error, show payment details after 15 seconds
-      setTimeout(() => {
-        setShowPaymentInfo(true);
-      }, 15000);
+      setShowPaymentInfo(true);
+      setLoadingOrder(false);
     } finally {
       if (progressInterval) {
         clearInterval(progressInterval);
@@ -286,7 +281,6 @@ const CheckoutPage = () => {
       { duration: 5000 }
     );
     
-    // Close dialog automatically after 2 seconds
     setTimeout(() => {
       setShowPaymentDialog(false);
       navigate('/');
@@ -393,7 +387,7 @@ const CheckoutPage = () => {
                     
                     <div>
                       <Label htmlFor="postalCode">
-                        {language === 'ru' ? 'Почтовый индекс (необязательно)' : 'Пошта индексі (міндетті емес)'}
+                        {language === 'ru' ? 'Почтовый индекс (необязательно)' : 'Пошта индексі (мінд��тті емес)'}
                       </Label>
                       <Input
                         id="postalCode"
@@ -524,28 +518,24 @@ const CheckoutPage = () => {
           <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>
-                {progressValue < 100 
+                {loadingOrder
                   ? language === 'ru' ? 'Обработка заказа' : 'Тапсырысты өңдеу'
                   : language === 'ru' ? 'Информация об оплате' : 'Төлем туралы ақпарат'
                 }
               </DialogTitle>
               <DialogDescription>
-                {progressValue < 100 
+                {loadingOrder
                   ? language === 'ru' 
                     ? 'Пожалуйста, подождите, пока мы обрабатываем ваш заказ...' 
                     : 'Тапсырысыңызды өңдеу барысында күте тұрыңыз...'
-                  : !showPaymentInfo
-                    ? language === 'ru'
-                      ? 'Подготовка платежной информации...'
-                      : 'Төлем ақпаратын дайындау...'
-                    : language === 'ru'
-                      ? 'Используйте следующие реквизиты для оплаты заказа'
-                      : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
+                  : language === 'ru'
+                    ? 'Используйте следующие реквизиты для оплаты заказа'
+                    : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
                 }
               </DialogDescription>
             </DialogHeader>
             
-            {progressValue < 100 ? (
+            {loadingOrder ? (
               <div className="space-y-6 py-4">
                 <div className="space-y-2">
                   <Progress value={progressValue} className="h-2" />
@@ -554,17 +544,6 @@ const CheckoutPage = () => {
                 <div className="flex justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
                 </div>
-              </div>
-            ) : !showPaymentInfo ? (
-              <div className="space-y-6 py-4">
-                <div className="flex justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
-                </div>
-                <p className="text-center text-sm text-gray-500">
-                  {language === 'ru' 
-                    ? 'Пожалуйста, подождите, информация об оплате появится через несколько секунд...' 
-                    : 'Өтінеміз, күте тұрыңыз, төлем туралы ақпарат бірнеше секундтан кейін пайда болады...'}
-                </p>
               </div>
             ) : (
               <div className="space-y-4 py-4">
@@ -758,7 +737,6 @@ const CheckoutPage = () => {
         </Dialog>
       </TooltipProvider>
       
-      {/* Hidden file input */}
       <input
         type="file"
         id="receipt"
