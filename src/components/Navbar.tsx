@@ -6,13 +6,15 @@ import {
   X, 
   ShoppingCart, 
   Globe, 
-  ChevronDown 
+  ChevronDown,
+  Headphones
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
+import TechSupportModal from './TechSupportModal';
 
 const Navbar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -21,6 +23,7 @@ const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isTechSupportOpen, setIsTechSupportOpen] = useState(false);
 
   // Track scroll position to change navbar appearance
   useEffect(() => {
@@ -52,6 +55,7 @@ const Navbar: React.FC = () => {
     { name: t('nav.catalog'), path: '/catalog' },
     { name: t('nav.about'), path: '/about' },
     { name: t('nav.delivery'), path: '/delivery' },
+    { name: t('nav.warranty'), path: '/warranty' },
     { name: t('nav.contacts'), path: '/contacts' }
   ];
 
@@ -83,6 +87,16 @@ const Navbar: React.FC = () => {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
+            {/* Tech Support */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-furniture-primary hover:text-furniture-secondary"
+              onClick={() => setIsTechSupportOpen(true)}
+            >
+              <Headphones size={22} />
+            </Button>
+
             {/* Language switcher */}
             <div className="relative">
               <button 
@@ -180,10 +194,22 @@ const Navbar: React.FC = () => {
                   {link.name}
                 </Link>
               ))}
+              <button 
+                className="flex items-center text-furniture-primary py-2"
+                onClick={() => {
+                  setIsTechSupportOpen(true);
+                  setIsMenuOpen(false);
+                }}
+              >
+                <Headphones size={18} className="mr-2" />
+                {language === 'ru' ? 'Тех поддержка' : 'Техникалық қолдау'}
+              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+      
+      <TechSupportModal open={isTechSupportOpen} onOpenChange={setIsTechSupportOpen} />
     </header>
   );
 };

@@ -7,6 +7,8 @@ type TelegramNotificationData = {
   customerName: string;
   customerPhone: string;
   totalAmount: number;
+  discount?: number;
+  promotionCode?: string;
   items: {
     name: string;
     quantity: number;
@@ -15,7 +17,7 @@ type TelegramNotificationData = {
 };
 
 // Константа с дефолтным токеном
-const DEFAULT_BOT_TOKEN = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
+const DEFAULT_BOT_TOKEN = '7744059489:AAG1fvOEiHc0f5Eyc6B3iciJUc99bGV1TWk';
 const DEFAULT_ADMIN_ID = '7145565433';
 
 // Save Telegram settings
@@ -97,11 +99,17 @@ const sendWithToken = async (botToken: string, adminId: string, data: TelegramNo
       `• ${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
     ).join('\n');
     
+    // Add promotion information if available
+    const promotionInfo = data.promotionCode 
+      ? `\n💎 *Промокод:* ${data.promotionCode}\n💰 *Скидка:* ${formatPrice(data.discount || 0)}`
+      : '';
+    
     const message = `
 🛒 *Новый заказ #${data.orderNumber}*
 
 👤 *Клиент:* ${data.customerName}
 📞 *Телефон:* ${data.customerPhone}
+${promotionInfo}
 
 *Товары:*
 ${items}

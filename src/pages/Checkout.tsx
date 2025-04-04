@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Loader2, Copy, Upload, Check, X } from 'lucide-react';
+import { CreditCard, Loader2, Copy, Upload, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -71,9 +71,7 @@ const CheckoutPage = () => {
           recipient: settings.paymentDetails.recipientName,
           bankAccount: settings.paymentDetails.accountNumber,
           bankName: settings.paymentDetails.bankName,
-          bic: '',
-          amount: total,
-          reference: `Order from ${name}`
+          amount: total
         });
       } catch (error) {
         console.error('Failed to load admin settings:', error);
@@ -181,6 +179,8 @@ const CheckoutPage = () => {
         paymentMethod: paymentMethod,
         additionalNotes: additionalNotes || null,
         totalAmount: total,
+        promotionCode: activePromotion?.code,
+        discount: discountAmount,
         items: orderItems
       };
       
@@ -387,7 +387,7 @@ const CheckoutPage = () => {
                     
                     <div>
                       <Label htmlFor="postalCode">
-                        {language === 'ru' ? 'Почтовый индекс (необязательно)' : 'Пошта индексі (мінд��тті емес)'}
+                        {language === 'ru' ? 'Почтовый индекс (необязательно)' : 'Пошта индексі (міндетті емес)'}
                       </Label>
                       <Input
                         id="postalCode"
@@ -626,26 +626,6 @@ const CheckoutPage = () => {
                               size="icon" 
                               className="h-6 w-6 rounded-full hover:bg-gray-200"
                               onClick={() => copyToClipboard(formatPrice(paymentDetails.amount).toString())}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      
-                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Тағайындау'}</div>
-                      <div className="col-span-2 flex items-center">
-                        <div className="font-medium mr-2 line-clamp-2">{paymentDetails.reference}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 rounded-full hover:bg-gray-200"
-                              onClick={() => copyToClipboard(paymentDetails.reference)}
                             >
                               <Copy className="h-3.5 w-3.5" />
                             </Button>

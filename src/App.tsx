@@ -19,6 +19,7 @@ import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import About from "./pages/About";
 import Delivery from "./pages/Delivery";
+import Warranty from "./pages/Warranty";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -54,6 +55,7 @@ const App = () => (
                     <Route path="/checkout/success" element={<CheckoutSuccess />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/delivery" element={<Delivery />} />
+                    <Route path="/warranty" element={<Warranty />} />
                     
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />

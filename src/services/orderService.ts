@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { CartItemType } from '@/types/product';
 import { fetchAdminSettings } from './adminService';
+import { sendTelegramNotification } from './telegramService';
 
 interface OrderItem {
   productId: string;
@@ -21,6 +22,8 @@ interface OrderData {
   additionalNotes: string | null;
   totalAmount: number;
   items: OrderItem[];
+  promotionCode?: string;
+  discount?: number;
   receiptImage?: File | null;
 }
 
@@ -29,7 +32,6 @@ interface PaymentDetails {
   bankAccount: string;
   bankName: string;
   amount: number;
-  reference: string;
 }
 
 interface CreateOrderResponse {
@@ -56,6 +58,8 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
         payment_method: orderData.paymentMethod,
         additional_notes: orderData.additionalNotes,
         total_amount: orderData.totalAmount,
+        promotion_code: orderData.promotionCode,
+        discount_amount: orderData.discount,
         status: 'pending'
       })
       .select('id')
@@ -69,8 +73,7 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
         recipient: adminSettings.paymentDetails.recipientName,
         bankAccount: adminSettings.paymentDetails.accountNumber,
         bankName: adminSettings.paymentDetails.bankName,
-        amount: orderData.totalAmount,
-        reference: `Order from ${orderData.customerName}`
+        amount: orderData.totalAmount
       };
       
       return {
@@ -99,13 +102,25 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
       // Continue despite the error - we still want to show payment details
     }
 
+    // Send Telegram notification
+    sendTelegramNotification({
+      orderNumber: orderId.toString(),
+      customerName: orderData.customerName,
+      customerPhone: orderData.customerPhone,
+      totalAmount: orderData.totalAmount,
+      promotionCode: orderData.promotionCode,
+      discount: orderData.discount,
+      items: orderData.items
+    }).catch(error => {
+      console.error('Error sending Telegram notification:', error);
+    });
+
     // Payment details
     const paymentDetails: PaymentDetails = {
       recipient: adminSettings.paymentDetails.recipientName,
       bankAccount: adminSettings.paymentDetails.accountNumber,
       bankName: adminSettings.paymentDetails.bankName,
-      amount: orderData.totalAmount,
-      reference: `Order #${orderId} from ${orderData.customerName}`
+      amount: orderData.totalAmount
     };
 
     return {
@@ -124,8 +139,7 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
         recipient: adminSettings.paymentDetails.recipientName,
         bankAccount: adminSettings.paymentDetails.accountNumber,
         bankName: adminSettings.paymentDetails.bankName,
-        amount: 0, // We don't know the amount in this case
-        reference: 'Order processing error'
+        amount: 0 // We don't know the amount in this case
       };
       
       return {
@@ -142,8 +156,7 @@ export const createOrder = async (orderData: OrderData): Promise<CreateOrderResp
           recipient: 'ALEXANDR FERBER',
           bankAccount: 'KZ44004300223375964',
           bankName: 'Kaspi Bank',
-          amount: 0,
-          reference: 'Order processing error'
+          amount: 0
         }
       };
     }
