@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CartItemType } from '@/types/product';
 import { sendTelegramNotification } from './telegramService';
@@ -23,7 +24,7 @@ export const createOrder = async (orderData: {
   promotionCode?: string;
   discountAmount?: number;
   additionalNotes?: string;
-}): Promise<{ orderId: string; reference: string }> => {
+}): Promise<{ orderId: string; reference: string; paymentDetails: any }> => {
   try {
     // Generate a unique order ID
     const orderId = crypto.randomUUID();
@@ -59,6 +60,7 @@ export const createOrder = async (orderData: {
     const orderItems = orderData.items.map(item => ({
       order_id: orderId,
       product_id: item.id,
+      product_name: item.name,
       quantity: item.quantity,
       price: item.price
     }));
@@ -90,11 +92,64 @@ export const createOrder = async (orderData: {
       promotionCode: orderData.promotionCode,
       items: telegramItems
     });
+    
+    // Fetch payment details from admin settings
+    const { data: settingsData } = await supabase
+      .from('settings')
+      .select('*')
+      .in('key', ['payment_recipient_name', 'payment_account_number', 'payment_bank_name']);
+    
+    const paymentDetails = {
+      recipient: settingsData?.find(s => s.key === 'payment_recipient_name')?.value || '',
+      bankAccount: settingsData?.find(s => s.key === 'payment_account_number')?.value || '',
+      bankName: settingsData?.find(s => s.key === 'payment_bank_name')?.value || '',
+      amount: orderData.totalAmount
+    };
 
-    return { orderId, reference };
+    return { orderId, reference, paymentDetails };
   } catch (error) {
     console.error('Error in createOrder:', error);
     throw error;
+  }
+};
+
+// Function to upload receipt image for an order
+export const uploadReceiptImage = async (orderId: string, file: File): Promise<{ success: boolean; error?: string }> => {
+  try {
+    // Generate a unique file name
+    const fileName = `${orderId}-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+    const filePath = `receipts/${fileName}`;
+    
+    // Upload the file to storage
+    const { error: uploadError } = await supabase.storage
+      .from('order_receipts')
+      .upload(filePath, file);
+    
+    if (uploadError) {
+      console.error('Error uploading receipt:', uploadError);
+      return { success: false, error: uploadError.message };
+    }
+    
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from('order_receipts')
+      .getPublicUrl(filePath);
+    
+    // Update the order with the receipt URL
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ receipt_url: urlData.publicUrl })
+      .eq('id', orderId);
+    
+    if (updateError) {
+      console.error('Error updating order with receipt URL:', updateError);
+      return { success: false, error: updateError.message };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error in uploadReceiptImage:', error);
+    return { success: false, error: error.message };
   }
 };
 

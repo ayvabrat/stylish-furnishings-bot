@@ -162,26 +162,19 @@ const CheckoutPage = () => {
     setProgressInterval(interval);
     
     try {
-      const orderItems = items.map(item => ({
-        productId: item.id,
-        productName: language === 'ru' ? item.name : item.nameKz || item.name,
-        quantity: item.quantity,
-        price: item.price
-      }));
-      
       const orderData = {
         customerName: name,
         customerPhone: phone,
-        customerEmail: email || null,
+        customerEmail: email || undefined,
         city,
         deliveryAddress: address,
-        postalCode: postalCode || null,
+        postalCode: postalCode || undefined,
         paymentMethod: paymentMethod,
-        additionalNotes: additionalNotes || null,
+        additionalNotes: additionalNotes || undefined,
         totalAmount: total,
         promotionCode: activePromotion?.code,
-        discount: discountAmount,
-        items: orderItems
+        discountAmount: discountAmount,
+        items: items
       };
       
       console.log('Submitting order:', orderData);
