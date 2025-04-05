@@ -272,7 +272,7 @@ export const products: ProductType[] = [
     nameKz: 'Комод с 6 ящиками Leset Кассио (Серый) в Астане',
     price: 62000,
     images: [
-      'https://i.postimg.cc/74sgqWQQ/1.webp',
+      'https://i.postimg.cc/ht2hjY8q/21.webp',
       'https://i.postimg.cc/K8GRmbMN/2.webp'
     ],
     category: 'dressers',
