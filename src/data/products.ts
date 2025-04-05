@@ -40,8 +40,8 @@ export const products: ProductType[] = [
     nameKz: 'Кровать Varna Grand 160х200, Рогожка (Savana Berry)',
     price: 145000,
     images: [
-      'public/lovable-uploads/8dddebb1-93f9-43e8-88d9-64a410136352.png',
-      'public/lovable-uploads/e64d80fe-ef88-49c8-8cf0-56175303ac7e.png'
+      'https://i.ibb.co/6Rm3mpmJ/aba5a0d0-8dc6-4e12-907c-c79b8bb39e37.jpg',
+      'https://i.ibb.co/S7JXjc7n/f7fda5a4-793a-4e77-8f4e-ac0d5dceb371.jpg'
     ],
     category: 'beds',
     description: {
