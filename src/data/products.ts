@@ -83,8 +83,8 @@ export const products: ProductType[] = [
     nameKz: 'Спальная кровать Эко 900 ЛДСП, Дуб вотан/Белый',
     price: 52000,
     images: [
-      'public/lovable-uploads/odnospalnaya-krovat-eko-900-ldsp-dub-votanbelyi-590x430.webp',
-      'public/lovable-uploads/odnospalnaya-krovat-eko-900-ldsp-yasen-shimo-temnyisvetlyi-2000x1460.webp'
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/odnospalnaya-krovat-eko-900-ldsp-dub-votanbelyi-590x430.png',
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/odnospalnaya-krovat-eko-900-ldsp-yasen-shimo-temnyisvetlyi-2000x1460.png'
     ],
     category: 'beds',
     description: {
@@ -104,8 +104,8 @@ export const products: ProductType[] = [
     nameKz: 'Двуспальная кровать с подъемным механизмом Модерн-3 (160)',
     price: 266000,
     images: [
-      'public/lovable-uploads/415022bf-9530-4913-9f6d-f4357eb15299.png',
-      'public/lovable-uploads/f1259ffa-ecb2-432d-a8ef-e8811b3d7690.png'
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/krovat-v-spalnu-modern-3-160-590x430.jpg',
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/krovat-v-spalnu-modern-3-160-1-2000x1460.jpg'
     ],
     category: 'beds',
     description: {
@@ -126,8 +126,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф Конго, 2-х створчатый (Венге/Выбеленное дерево)',
     price: 99000,
     images: [
-      'public/lovable-uploads/75e9da18-a3d7-43b3-bcbc-e60ba25d66d4.png',
-      'public/lovable-uploads/10a7caa0-f823-48c8-bb47-44208a0fbd08.png'
+      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-raspashnoi-kongo-2-h-stvorchatyi-vengevybelennoe-derevo-590x430.png',
+      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-raspashnoi-kongo-2-h-stvorchatyi-vengevybelennoe-derevo-2-2000x1460.png'
     ],
     category: 'wardrobes',
     description: {
@@ -147,8 +147,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф четырехдверный Элика',
     price: 276000,
     images: [
-      'public/lovable-uploads/ee3a284e-01da-4ec7-a043-d2373c4c5b5a.png',
-      'public/lovable-uploads/0a83d2cc-0eed-4dbb-8c4d-60ad6f309fa6.png'
+      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-4-dvernyi-elika-590x430.png',
+      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-4-dvernyi-elika-2000x1460.jpg'
     ],
     category: 'wardrobes',
     description: {
