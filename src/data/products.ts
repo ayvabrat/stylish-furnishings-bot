@@ -255,7 +255,7 @@ export const products: ProductType[] = [
     nameKz: 'Прикроватная тумбочка Вилладжио 680.130 в Астане',
     price: 75000,
     images: [
-      'https://i.ibb.co/bR6hjrV/tumba-prikrovatnaya-villadzhio-680-130-6-2000x1460.webp'
+      'https://i.postimg.cc/DyKSYLfR/3.webp'
     ],
     category: 'nightstands',
     characteristics: {
@@ -272,8 +272,8 @@ export const products: ProductType[] = [
     nameKz: 'Комод с 6 ящиками Leset Кассио (Серый) в Астане',
     price: 62000,
     images: [
-      'https://i.ibb.co/cKXWVWj/komod-v-spalnu-s-6-yashikami-leset-kassio-seryi-2-2000x1460.webp',
-      'https://i.ibb.co/W46WdYs/komod-v-spalnu-s-6-yashikami-leset-kassio-seryi-4-2000x1460.webp'
+      'https://i.postimg.cc/74sgqWQQ/1.webp',
+      'https://i.postimg.cc/K8GRmbMN/2.webp'
     ],
     category: 'dressers',
     characteristics: {
