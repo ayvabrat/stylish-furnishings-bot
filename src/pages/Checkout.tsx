@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -20,6 +21,24 @@ import { formatPrice } from '@/lib/utils';
 import PromoCodeInput from '@/components/PromoCodeInput';
 import { AdminSettings } from '@/types/admin';
 
+// Function to generate payment purpose with random characters and promo code digits
+const generatePaymentPurpose = (promoCode: string | undefined) => {
+  // Generate 5 random characters
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let randomChars = '';
+  for (let i = 0; i < 5; i++) {
+    randomChars += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  
+  // Extract digits from promo code if it exists
+  let digits = '';
+  if (promoCode) {
+    digits = promoCode.replace(/\D/g, ''); // Remove non-digits
+  }
+  
+  return `${randomChars}${digits}`;
+};
+
 const CheckoutPage = () => {
   const { language } = useLanguage();
   const { items, clearCart, calculateSubtotal } = useCart();
@@ -32,6 +51,7 @@ const CheckoutPage = () => {
   const [progressValue, setProgressValue] = useState(0);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const [paymentPurpose, setPaymentPurpose] = useState('');
   const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [showPaymentInfo, setShowPaymentInfo] = useState(false);
@@ -80,6 +100,11 @@ const CheckoutPage = () => {
     
     loadSettings();
   }, [total, name]);
+  
+  // Generate payment purpose when promo code changes
+  useEffect(() => {
+    setPaymentPurpose(generatePaymentPurpose(activePromotion?.code));
+  }, [activePromotion]);
   
   useEffect(() => {
     return () => {
@@ -184,7 +209,10 @@ const CheckoutPage = () => {
       console.log('Order created with ID:', response.orderId);
       
       setOrderId(response.orderId);
-      setPaymentDetails(response.paymentDetails);
+      setPaymentDetails({
+        ...response.paymentDetails,
+        purpose: paymentPurpose
+      });
       setProgressValue(100);
       setShowPaymentInfo(true);
       setLoadingOrder(false);
@@ -619,6 +647,27 @@ const CheckoutPage = () => {
                               size="icon" 
                               className="h-6 w-6 rounded-full hover:bg-gray-200"
                               onClick={() => copyToClipboard(formatPrice(paymentDetails.amount).toString())}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      
+                      {/* New Payment Purpose field */}
+                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Мақсаты'}</div>
+                      <div className="col-span-2 flex items-center">
+                        <div className="font-medium mr-2">{paymentPurpose}</div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 rounded-full hover:bg-gray-200"
+                              onClick={() => copyToClipboard(paymentPurpose)}
                             >
                               <Copy className="h-3.5 w-3.5" />
                             </Button>
