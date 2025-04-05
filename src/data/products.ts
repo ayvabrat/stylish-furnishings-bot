@@ -223,7 +223,7 @@ export const products: ProductType[] = [
     nameKz: 'Тумбочка прикроватная Айла ЛД 688.030.000, Белый/Статуарио, исполнение 1',
     price: 48000,
     images: [
-      'https://i.ibb.co/YBv2QgP/tumba-prikrovatnaya-aila-ld-688-030-000-belyistatuario-ispolnenie-1-8-2000x1460.webp'
+      'https://i.postimg.cc/xTyXr8c8/4.webp'
     ],
     category: 'nightstands',
     characteristics: {
