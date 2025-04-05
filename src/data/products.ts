@@ -169,8 +169,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф для одежды Либерти 51.01 (H-150)',
     price: 87000,
     images: [
-      'public/lovable-uploads/a13394ee-fea9-476d-ba34-6489c2b3301b.png',
-      'public/lovable-uploads/34bcc0e7-d43a-42cb-9c49-d1e4e86fe778.png'
+      'https://s.iimg.su/s/05/QmprnNaowJA5HICRAXhXzEtKnlJ3faODT95tHk8n.jpg',
+      'https://s.iimg.su/s/05/KTpudUUJJ3MWWCpKeE8erlmtUvqYCeVwd7kr3NrP.jpg'
     ],
     category: 'wardrobes',
     description: {
@@ -190,8 +190,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф распашной 4-х дверный Вега с 2 ящиками',
     price: 200000,
     images: [
-      'public/lovable-uploads/84a3be10-7520-4a73-8dc8-2574154a7ac5.png',
-      'public/lovable-uploads/08922a97-3494-4b32-97fe-679995c2024f.png'
+      'https://s.iimg.su/s/05/EzwqqF14rWjOl5GPmRtCBXOMtT1UpwfDFKibhspi.jpg',
+      'https://s.iimg.su/s/05/6831vPYMot51Vbv5tFrlZMnZp6NaWf8cWM2e5YJW.jpg'
     ],
     category: 'wardrobes',
     description: {
@@ -212,8 +212,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф 2-х створчатый 2200х1200х420 с одним зеркалом ХИТ 22-4-12/2-15 Белая шагрень',
     price: 111000,
     images: [
-      'public/lovable-uploads/24c5b2fc-a25a-42aa-8c31-4b8e18603154.png',
-      'public/lovable-uploads/90aa0eb9-1d54-4e88-bafe-7c0cf6845c82.png'
+      'https://s.iimg.su/s/05/Pya3nqC2uneC6ZOW1xZlZi8ibs7MrdZ3EGJATT19.jpg',
+      'https://s.iimg.su/s/05/gwdGSY4xvf1a60GcXsXlraTNnW9fTGx3ZaSBB1Dc.jpg'
     ],
     category: 'wardrobes',
     description: {
@@ -233,7 +233,7 @@ export const products: ProductType[] = [
     nameKz: 'Прикроватная тумба 51.17 Либерти H-20',
     price: 35000,
     images: [
-      'public/lovable-uploads/5b6d7aa6-9a98-48bd-b743-e4629578a2db.png'
+      'https://s.iimg.su/s/05/c6fYhhS7qtvBruKIJ11u1rdlTsgdjW3CcqGxcH0J.jpg'
     ],
     category: 'nightstands',
     description: {
