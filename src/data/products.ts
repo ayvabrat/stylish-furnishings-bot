@@ -40,8 +40,8 @@ export const products: ProductType[] = [
     nameKz: 'Кровать Varna Grand 160х200, Рогожка (Savana Berry)',
     price: 145000,
     images: [
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/dvuspalnaya-krovat-varna-grand-160h200-rogozhka-savana-berry-fioletovyi-590x430.jpg',
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/dvuspalnaya-krovat-varna-grand-160h200-rogozhka-savana-berry-fioletovyi-2000x1460.png'
+      'public/lovable-uploads/8dddebb1-93f9-43e8-88d9-64a410136352.png',
+      'public/lovable-uploads/e64d80fe-ef88-49c8-8cf0-56175303ac7e.png'
     ],
     category: 'beds',
     description: {
@@ -62,7 +62,8 @@ export const products: ProductType[] = [
     nameKz: 'Кровать 2-спальная Вероника-3 (Слоновая кость) 160х200',
     price: 90000,
     images: [
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/dvuspalnaya-krovat-veronika-3-slonovaya-kost-160h200-4-590x430.jpg',
+      'public/lovable-uploads/eda46ef6-581c-4f09-ba51-9b6acbf5635a.png',
+      'public/lovable-uploads/b453a213-a29a-4d82-b1e5-6a5cffdc1d08.png'
     ],
     category: 'beds',
     description: {
@@ -83,8 +84,8 @@ export const products: ProductType[] = [
     nameKz: 'Спальная кровать Эко 900 ЛДСП, Дуб вотан/Белый',
     price: 52000,
     images: [
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/odnospalnaya-krovat-eko-900-ldsp-dub-votanbelyi-590x430.png',
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/odnospalnaya-krovat-eko-900-ldsp-yasen-shimo-temnyisvetlyi-2000x1460.png'
+      'public/lovable-uploads/c3dab1c5-cbb7-4d2f-ac50-b8ddd15e5179.png',
+      'public/lovable-uploads/82a3dabc-dc36-4954-9491-423dfa0509f0.png'
     ],
     category: 'beds',
     description: {
@@ -104,8 +105,8 @@ export const products: ProductType[] = [
     nameKz: 'Двуспальная кровать с подъемным механизмом Модерн-3 (160)',
     price: 266000,
     images: [
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/krovat-v-spalnu-modern-3-160-590x430.jpg',
-      'https://cdn.domdivanov.kz/files/imgs/ig1111928/krovat-v-spalnu-modern-3-160-1-2000x1460.jpg'
+      'public/lovable-uploads/415022bf-9530-4913-9f6d-f4357eb15299.png',
+      'public/lovable-uploads/f1259ffa-ecb2-432d-a8ef-e8811b3d7690.png'
     ],
     category: 'beds',
     description: {
@@ -126,8 +127,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф Конго, 2-х створчатый (Венге/Выбеленное дерево)',
     price: 99000,
     images: [
-      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-raspashnoi-kongo-2-h-stvorchatyi-vengevybelennoe-derevo-590x430.png',
-      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-raspashnoi-kongo-2-h-stvorchatyi-vengevybelennoe-derevo-2-2000x1460.png'
+      'public/lovable-uploads/75e9da18-a3d7-43b3-bcbc-e60ba25d66d4.png',
+      'public/lovable-uploads/10a7caa0-f823-48c8-bb47-44208a0fbd08.png'
     ],
     category: 'wardrobes',
     description: {
@@ -147,8 +148,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф четырехдверный Элика',
     price: 276000,
     images: [
-      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-4-dvernyi-elika-590x430.png',
-      'https://cdn.domdivanov.kz/files/imgs/ig1817754/shkaf-4-dvernyi-elika-2000x1460.jpg'
+      'public/lovable-uploads/ee3a284e-01da-4ec7-a043-d2373c4c5b5a.png',
+      'public/lovable-uploads/0a83d2cc-0eed-4dbb-8c4d-60ad6f309fa6.png'
     ],
     category: 'wardrobes',
     description: {
@@ -169,8 +170,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф для одежды Либерти 51.01 (H-150)',
     price: 87000,
     images: [
-      'https://s.iimg.su/s/05/QmprnNaowJA5HICRAXhXzEtKnlJ3faODT95tHk8n.jpg',
-      'https://s.iimg.su/s/05/KTpudUUJJ3MWWCpKeE8erlmtUvqYCeVwd7kr3NrP.jpg'
+      'public/lovable-uploads/a13394ee-fea9-476d-ba34-6489c2b3301b.png',
+      'public/lovable-uploads/34bcc0e7-d43a-42cb-9c49-d1e4e86fe778.png'
     ],
     category: 'wardrobes',
     description: {
@@ -190,8 +191,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф распашной 4-х дверный Вега с 2 ящиками',
     price: 200000,
     images: [
-      'https://s.iimg.su/s/05/EzwqqF14rWjOl5GPmRtCBXOMtT1UpwfDFKibhspi.jpg',
-      'https://s.iimg.su/s/05/6831vPYMot51Vbv5tFrlZMnZp6NaWf8cWM2e5YJW.jpg'
+      'public/lovable-uploads/84a3be10-7520-4a73-8dc8-2574154a7ac5.png',
+      'public/lovable-uploads/08922a97-3494-4b32-97fe-679995c2024f.png'
     ],
     category: 'wardrobes',
     description: {
@@ -212,8 +213,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф 2-х створчатый 2200х1200х420 с одним зеркалом ХИТ 22-4-12/2-15 Белая шагрень',
     price: 111000,
     images: [
-      'https://s.iimg.su/s/05/Pya3nqC2uneC6ZOW1xZlZi8ibs7MrdZ3EGJATT19.jpg',
-      'https://s.iimg.su/s/05/gwdGSY4xvf1a60GcXsXlraTNnW9fTGx3ZaSBB1Dc.jpg'
+      'public/lovable-uploads/24c5b2fc-a25a-42aa-8c31-4b8e18603154.png',
+      'public/lovable-uploads/90aa0eb9-1d54-4e88-bafe-7c0cf6845c82.png'
     ],
     category: 'wardrobes',
     description: {
@@ -233,7 +234,7 @@ export const products: ProductType[] = [
     nameKz: 'Прикроватная тумба 51.17 Либерти H-20',
     price: 35000,
     images: [
-      'https://s.iimg.su/s/05/c6fYhhS7qtvBruKIJ11u1rdlTsgdjW3CcqGxcH0J.jpg'
+      'public/lovable-uploads/5b6d7aa6-9a98-48bd-b743-e4629578a2db.png'
     ],
     category: 'nightstands',
     description: {
