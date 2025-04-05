@@ -62,8 +62,7 @@ export const products: ProductType[] = [
     nameKz: 'Кровать 2-спальная Вероника-3 (Слоновая кость) 160х200',
     price: 90000,
     images: [
-      'public/lovable-uploads/eda46ef6-581c-4f09-ba51-9b6acbf5635a.png',
-      'public/lovable-uploads/b453a213-a29a-4d82-b1e5-6a5cffdc1d08.png'
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/dvuspalnaya-krovat-veronika-3-slonovaya-kost-160h200-4-590x430.jpg',
     ],
     category: 'beds',
     description: {
