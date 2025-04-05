@@ -40,8 +40,8 @@ export const products: ProductType[] = [
     nameKz: 'Кровать Varna Grand 160х200, Рогожка (Savana Berry)',
     price: 145000,
     images: [
-      'https://i.ibb.co/6Rm3mpmJ/aba5a0d0-8dc6-4e12-907c-c79b8bb39e37.jpg',
-      'https://i.ibb.co/S7JXjc7n/f7fda5a4-793a-4e77-8f4e-ac0d5dceb371.jpg'
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/dvuspalnaya-krovat-varna-grand-160h200-rogozhka-savana-berry-fioletovyi-590x430.jpg',
+      'https://cdn.domdivanov.kz/files/imgs/ig1111928/dvuspalnaya-krovat-varna-grand-160h200-rogozhka-savana-berry-fioletovyi-2000x1460.png'
     ],
     category: 'beds',
     description: {
