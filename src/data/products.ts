@@ -40,8 +40,8 @@ export const products: ProductType[] = [
     nameKz: 'Кровать Varna Grand 160х200, Рогожка (Savana Berry)',
     price: 145000,
     images: [
-      'public/lovable-uploads/5fe8c49c-e9e8-4c5e-a41a-a29008175e0f.png',
-      'public/lovable-uploads/470dc0bb-1c86-4529-a7a0-e5a924c15733.png'
+      'public/lovable-uploads/8dddebb1-93f9-43e8-88d9-64a410136352.png',
+      'public/lovable-uploads/e64d80fe-ef88-49c8-8cf0-56175303ac7e.png'
     ],
     category: 'beds',
     description: {
@@ -62,7 +62,8 @@ export const products: ProductType[] = [
     nameKz: 'Кровать 2-спальная Вероника-3 (Слоновая кость) 160х200',
     price: 90000,
     images: [
-      'public/lovable-uploads/3ccf6b7b-a34b-4323-ac4b-e27e17b1ddfd.png'
+      'public/lovable-uploads/eda46ef6-581c-4f09-ba51-9b6acbf5635a.png',
+      'public/lovable-uploads/b453a213-a29a-4d82-b1e5-6a5cffdc1d08.png'
     ],
     category: 'beds',
     description: {
@@ -83,8 +84,8 @@ export const products: ProductType[] = [
     nameKz: 'Спальная кровать Эко 900 ЛДСП, Дуб вотан/Белый',
     price: 52000,
     images: [
-      'public/lovable-uploads/d183395f-1ec3-4802-971a-c335de3cc7af.png',
-      'public/lovable-uploads/621b70cf-dc55-4f46-850a-0da17984c553.png'
+      'public/lovable-uploads/c3dab1c5-cbb7-4d2f-ac50-b8ddd15e5179.png',
+      'public/lovable-uploads/82a3dabc-dc36-4954-9491-423dfa0509f0.png'
     ],
     category: 'beds',
     description: {
@@ -104,8 +105,8 @@ export const products: ProductType[] = [
     nameKz: 'Двуспальная кровать с подъемным механизмом Модерн-3 (160)',
     price: 266000,
     images: [
-      'public/lovable-uploads/ac55d097-53f5-4c65-9253-7a592853ad6b.png',
-      'public/lovable-uploads/8669f2ea-8bd0-41a6-944a-69d9dadf7f48.png'
+      'public/lovable-uploads/415022bf-9530-4913-9f6d-f4357eb15299.png',
+      'public/lovable-uploads/f1259ffa-ecb2-432d-a8ef-e8811b3d7690.png'
     ],
     category: 'beds',
     description: {
@@ -126,8 +127,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф Конго, 2-х створчатый (Венге/Выбеленное дерево)',
     price: 99000,
     images: [
-      'public/lovable-uploads/d3379294-a406-4d8f-9226-963fe91e646d.png',
-      'public/lovable-uploads/3c1abd38-c9e1-43da-89a6-6ee91e368500.png'
+      'public/lovable-uploads/75e9da18-a3d7-43b3-bcbc-e60ba25d66d4.png',
+      'public/lovable-uploads/10a7caa0-f823-48c8-bb47-44208a0fbd08.png'
     ],
     category: 'wardrobes',
     description: {
@@ -147,8 +148,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф четырехдверный Элика',
     price: 276000,
     images: [
-      'public/lovable-uploads/9952b798-108e-4bea-858f-9955b1cb4251.png',
-      'public/lovable-uploads/a614200e-6b7e-4334-ba4f-31c58525b7a0.png'
+      'public/lovable-uploads/ee3a284e-01da-4ec7-a043-d2373c4c5b5a.png',
+      'public/lovable-uploads/0a83d2cc-0eed-4dbb-8c4d-60ad6f309fa6.png'
     ],
     category: 'wardrobes',
     description: {
@@ -169,8 +170,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф для одежды Либерти 51.01 (H-150)',
     price: 87000,
     images: [
-      'public/lovable-uploads/b76a93f9-f079-409e-9465-0b835a30ab34.png',
-      'public/lovable-uploads/31cefc74-80e4-4f4a-8399-55f8fa6ab7bb.png'
+      'public/lovable-uploads/a13394ee-fea9-476d-ba34-6489c2b3301b.png',
+      'public/lovable-uploads/34bcc0e7-d43a-42cb-9c49-d1e4e86fe778.png'
     ],
     category: 'wardrobes',
     description: {
@@ -190,8 +191,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф распашной 4-х дверный Вега с 2 ящиками',
     price: 200000,
     images: [
-      'public/lovable-uploads/0d910a87-88d1-433b-acfa-b6a5d1a62e82.png',
-      'public/lovable-uploads/70490181-fcfa-4d83-86c0-f55cb816966b.png'
+      'public/lovable-uploads/84a3be10-7520-4a73-8dc8-2574154a7ac5.png',
+      'public/lovable-uploads/08922a97-3494-4b32-97fe-679995c2024f.png'
     ],
     category: 'wardrobes',
     description: {
@@ -212,8 +213,8 @@ export const products: ProductType[] = [
     nameKz: 'Шкаф 2-х створчатый 2200х1200х420 с одним зеркалом ХИТ 22-4-12/2-15 Белая шагрень',
     price: 111000,
     images: [
-      'public/lovable-uploads/2bdc31d5-5e3a-43f3-94b3-76093e38e65e.png',
-      'public/lovable-uploads/2c327baa-368c-4e64-8a67-6713b3fb4e87.png'
+      'public/lovable-uploads/24c5b2fc-a25a-42aa-8c31-4b8e18603154.png',
+      'public/lovable-uploads/90aa0eb9-1d54-4e88-bafe-7c0cf6845c82.png'
     ],
     category: 'wardrobes',
     description: {
