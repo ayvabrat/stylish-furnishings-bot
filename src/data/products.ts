@@ -83,8 +83,8 @@ export const products: ProductType[] = [
     nameKz: 'Спальная кровать Эко 900 ЛДСП, Дуб вотан/Белый',
     price: 52000,
     images: [
-      'public/lovable-uploads/c3dab1c5-cbb7-4d2f-ac50-b8ddd15e5179.png',
-      'public/lovable-uploads/82a3dabc-dc36-4954-9491-423dfa0509f0.png'
+      'public/lovable-uploads/odnospalnaya-krovat-eko-900-ldsp-dub-votanbelyi-590x430.webp',
+      'public/lovable-uploads/odnospalnaya-krovat-eko-900-ldsp-yasen-shimo-temnyisvetlyi-2000x1460.webp'
     ],
     category: 'beds',
     description: {
