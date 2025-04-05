@@ -289,7 +289,7 @@ export const products: ProductType[] = [
     nameKz: 'Комод в спальню с 7 ящиками Leset Ноа в Астане',
     price: 50000,
     images: [
-      'https://i.ibb.co/jk76csY/komod-v-spalnu-s-7-yashikami-leset-noa-2-2000x1460.webp'
+      'https://i.postimg.cc/74sgqWQQ/1.webp'
     ],
     category: 'dressers',
     characteristics: {
