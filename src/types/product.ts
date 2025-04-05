@@ -1,3 +1,4 @@
+
 export interface ProductType {
   id: string;
   name: string;
@@ -5,10 +6,6 @@ export interface ProductType {
   price: number;
   images: string[];
   category: string;
-  description: {
-    ru: string;
-    kz: string;
-  };
   characteristics: {
     dimensions: string;
     material: string;

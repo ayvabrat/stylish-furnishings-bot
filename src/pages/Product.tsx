@@ -188,34 +188,26 @@ const Product = () => {
                   </Button>
                 </div>
                 
-                {/* Product tabs */}
-                <Tabs defaultValue="description" className="w-full">
-                  <TabsList className="mb-4 bg-furniture-light">
-                    <TabsTrigger value="description">{t('product.description')}</TabsTrigger>
-                    <TabsTrigger value="characteristics">{t('product.characteristics')}</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="description" className="text-furniture-secondary">
-                    <p>{product.description[language]}</p>
-                  </TabsContent>
-                  
-                  <TabsContent value="characteristics">
-                    <ul className="space-y-2">
-                      <li className="flex">
-                        <span className="font-medium w-32 text-furniture-primary">{t('product.dimensions')}:</span>
-                        <span className="text-furniture-secondary">{product.characteristics.dimensions}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-furniture-primary">{t('product.material')}:</span>
-                        <span className="text-furniture-secondary">{product.characteristics.material}</span>
-                      </li>
-                      <li className="flex">
-                        <span className="font-medium w-32 text-furniture-primary">{t('product.color')}:</span>
-                        <span className="text-furniture-secondary">{product.characteristics.color}</span>
-                      </li>
-                    </ul>
-                  </TabsContent>
-                </Tabs>
+                {/* Product characteristics */}
+                <div className="mt-4">
+                  <h2 className="text-lg font-medium mb-3">
+                    {language === 'ru' ? 'Характеристики' : 'Сипаттамалары'}
+                  </h2>
+                  <ul className="space-y-2">
+                    <li className="flex">
+                      <span className="font-medium w-32 text-furniture-primary">{t('product.dimensions')}:</span>
+                      <span className="text-furniture-secondary">{product.characteristics.dimensions}</span>
+                    </li>
+                    <li className="flex">
+                      <span className="font-medium w-32 text-furniture-primary">{t('product.material')}:</span>
+                      <span className="text-furniture-secondary">{product.characteristics.material}</span>
+                    </li>
+                    <li className="flex">
+                      <span className="font-medium w-32 text-furniture-primary">{t('product.color')}:</span>
+                      <span className="text-furniture-secondary">{product.characteristics.color}</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
             

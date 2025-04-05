@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ProductType, CategoryType } from '@/types/product';
 
@@ -19,10 +20,6 @@ export const fetchProducts = async (): Promise<ProductType[]> => {
     price: product.price,
     images: product.images || [],
     category: product.category_id || '',
-    description: {
-      ru: product.description_ru || '',
-      kz: product.description_kk || ''
-    },
     characteristics: {
       dimensions: '',
       material: '',
@@ -53,10 +50,6 @@ export const fetchPopularProducts = async (limit: number = 8): Promise<ProductTy
     price: product.price,
     images: product.images || [],
     category: product.category_id || '',
-    description: {
-      ru: product.description_ru || '',
-      kz: product.description_kk || ''
-    },
     characteristics: {
       dimensions: '',
       material: '',
@@ -87,10 +80,6 @@ export const fetchNewProducts = async (limit: number = 8): Promise<ProductType[]
     price: product.price,
     images: product.images || [],
     category: product.category_id || '',
-    description: {
-      ru: product.description_ru || '',
-      kz: product.description_kk || ''
-    },
     characteristics: {
       dimensions: '',
       material: '',
