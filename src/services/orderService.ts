@@ -1,9 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CartItemType } from '@/types/product';
-import { sendTelegramNotification } from './telegramService';
 
-// Define the OrderItem interface to match what telegramService expects
+// Define the OrderItem interface 
 interface OrderItem {
   name: string;
   quantity: number;
@@ -74,24 +73,6 @@ export const createOrder = async (orderData: {
       console.error('Error creating order items:', orderItemsError);
       throw new Error('Failed to create order items');
     }
-
-    // Prepare items for Telegram notification
-    const telegramItems: OrderItem[] = orderData.items.map(item => ({
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price
-    }));
-
-    // Send notification to Telegram
-    await sendTelegramNotification({
-      orderNumber: reference,
-      customerName: orderData.customerName,
-      customerPhone: orderData.customerPhone,
-      totalAmount: orderData.totalAmount,
-      discount: orderData.discountAmount,
-      promotionCode: orderData.promotionCode,
-      items: telegramItems
-    });
     
     // Fetch payment details from admin settings
     const { data: settingsData } = await supabase

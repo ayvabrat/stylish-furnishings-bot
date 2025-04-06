@@ -53,7 +53,6 @@ const CheckoutPage = () => {
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [paymentPurpose, setPaymentPurpose] = useState('');
   const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
-  const [orderError, setOrderError] = useState<string | null>(null);
   const [showPaymentInfo, setShowPaymentInfo] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
@@ -169,7 +168,6 @@ const CheckoutPage = () => {
     }
     
     setIsSubmitting(true);
-    setOrderError(null);
     setShowPaymentDialog(true);
     setProgressValue(0);
     setShowPaymentInfo(false);
@@ -223,17 +221,9 @@ const CheckoutPage = () => {
         toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
           duration: 3000
         });
-      } else {
-        setOrderError(language === 'ru' 
-          ? 'Возникли проблемы при сохранении заказа, но вы можете продолжить оплату' 
-          : 'Тапсырысты сақтау кезінде проблемалар туындады, бірақ сіз төлемді жалғастыра аласыз');
       }
     } catch (error) {
       console.error('Failed to create order:', error);
-      setOrderError(language === 'ru' 
-        ? 'Ошибка при оформлении заказа, но вы все равно можете выполнить оплату'
-        : 'Тапсырысты рәсімдеу кезінде қате, бірақ сіз бәрібір төлем жасай аласыз');
-      
       setProgressValue(100);
       setShowPaymentInfo(true);
       setLoadingOrder(false);
@@ -247,7 +237,7 @@ const CheckoutPage = () => {
 
   const handleCloseDialog = () => {
     setShowPaymentDialog(false);
-    if (!orderError && paymentComplete) {
+    if (paymentComplete) {
       navigate('/');
     }
   };
@@ -568,12 +558,6 @@ const CheckoutPage = () => {
               </div>
             ) : (
               <div className="space-y-4 py-4">
-                {orderError && (
-                  <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-md mb-4">
-                    {orderError}
-                  </div>
-                )}
-                
                 {paymentDetails && (
                   <>
                     <div className="grid grid-cols-3 gap-1 text-sm">
@@ -657,7 +641,7 @@ const CheckoutPage = () => {
                         </Tooltip>
                       </div>
                       
-                      {/* New Payment Purpose field */}
+                      {/* Payment Purpose field */}
                       <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Мақсаты'}</div>
                       <div className="col-span-2 flex items-center">
                         <div className="font-medium mr-2">{paymentPurpose}</div>
