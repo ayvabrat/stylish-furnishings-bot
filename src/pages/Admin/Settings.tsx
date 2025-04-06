@@ -9,12 +9,9 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchAdminSettings, updateAdminSettings } from '@/services/adminService';
-import { saveTelegramSettings } from '@/services/telegramService';
 import { useAdmin } from '@/contexts/AdminContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { AdminSettings } from '@/types/admin';
-
-const DEFAULT_BOT_TOKEN = '7739882869:AAHyIqZ5nOTHJcmeCoN-z9QoGnOW-go0Rjk';
 
 const AdminSettingsPage = () => {
   const { language } = useLanguage();
@@ -32,14 +29,6 @@ const AdminSettingsPage = () => {
     }
   });
   
-  const [telegramSettings, setTelegramSettings] = useState<{
-    botToken: string;
-    adminId: string;
-  }>({
-    botToken: DEFAULT_BOT_TOKEN,
-    adminId: ""
-  });
-  
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -49,35 +38,6 @@ const AdminSettingsPage = () => {
         const data = await fetchAdminSettings();
         if (data) {
           setSettings(data);
-        }
-        
-        // Load Telegram settings
-        const { data: telegramData, error } = await supabase
-          .from('settings')
-          .select('value')
-          .eq('key', 'telegram_settings')
-          .single();
-          
-        if (!error && telegramData) {
-          try {
-            const parsedSettings = JSON.parse(telegramData.value);
-            setTelegramSettings({
-              botToken: parsedSettings.botToken || DEFAULT_BOT_TOKEN,
-              adminId: parsedSettings.adminId || ""
-            });
-          } catch (e) {
-            console.error('Error parsing Telegram settings:', e);
-            setTelegramSettings({
-              botToken: DEFAULT_BOT_TOKEN,
-              adminId: ""
-            });
-          }
-        } else {
-          console.log('No Telegram settings found, using default token');
-          setTelegramSettings({
-            botToken: DEFAULT_BOT_TOKEN,
-            adminId: ""
-          });
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
@@ -112,13 +72,6 @@ const AdminSettingsPage = () => {
     });
   };
   
-  const handleTelegramChange = (field: 'botToken' | 'adminId', value: string) => {
-    setTelegramSettings({
-      ...telegramSettings,
-      [field]: value
-    });
-  };
-  
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
@@ -127,13 +80,7 @@ const AdminSettingsPage = () => {
       // Save admin settings
       const adminSettingsResult = await updateAdminSettings(settings);
       
-      // Make sure we're using the default token if the field is empty
-      const botToken = telegramSettings.botToken.trim() === '' ? DEFAULT_BOT_TOKEN : telegramSettings.botToken;
-      
-      // Save Telegram settings
-      const telegramSettingsResult = await saveTelegramSettings(botToken, telegramSettings.adminId);
-      
-      if (adminSettingsResult && telegramSettingsResult) {
+      if (adminSettingsResult) {
         toast.success(language === 'ru' ? 'Настройки успешно сохранены' : 'Параметрлер сәтті сақталды', {
           duration: 1000
         });
@@ -268,48 +215,6 @@ const AdminSettingsPage = () => {
                       onChange={(e) => handleContactChange('address', e.target.value)}
                       rows={3}
                     />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-semibold mb-4">
-                  {language === 'ru' ? 'Настройки Telegram' : 'Telegram параметрлері'}
-                </h2>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="bot-token" className="text-sm font-medium">
-                      {language === 'ru' ? 'Токен бота' : 'Бот токені'}
-                    </label>
-                    <Input
-                      id="bot-token"
-                      value={telegramSettings.botToken}
-                      onChange={(e) => handleTelegramChange('botToken', e.target.value)}
-                      placeholder="123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {language === 'ru' 
-                        ? 'Получить токен можно у @BotFather в Telegram' 
-                        : 'Токенді Telegram-дағы @BotFather-ден алуға болады'}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label htmlFor="admin-id" className="text-sm font-medium">
-                      {language === 'ru' ? 'ID администратора' : 'Әкімші ID'}
-                    </label>
-                    <Input
-                      id="admin-id"
-                      value={telegramSettings.adminId}
-                      onChange={(e) => handleTelegramChange('adminId', e.target.value)}
-                      placeholder="123456789"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {language === 'ru' 
-                        ? 'Получить ID можно у @userinfobot в Telegram' 
-                        : 'ID-ді Telegram-дағы @userinfobot-тан алуға болады'}
-                    </p>
                   </div>
                 </div>
               </div>

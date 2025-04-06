@@ -251,8 +251,8 @@ export const products: ProductType[] = [
   },
   {
     id: 'p13',
-    name: 'Прикроватная тумбочка Вилладжио 680.130 в Астане',
-    nameKz: 'Прикроватная тумбочка Вилладжио 680.130 в Астане',
+    name: 'Прикроватная тумбочка Вилладжио 680.130',
+    nameKz: 'Прикроватная тумбочка Вилладжио 680.130',
     price: 75000,
     images: [
       'https://i.postimg.cc/DyKSYLfR/3.webp'
@@ -268,8 +268,8 @@ export const products: ProductType[] = [
   },
   {
     id: 'p14',
-    name: 'Комод с 6 ящиками Leset Кассио (Серый) в Астане',
-    nameKz: 'Комод с 6 ящиками Leset Кассио (Серый) в Астане',
+    name: 'Комод с 6 ящиками Leset Кассио (Серый)',
+    nameKz: 'Комод с 6 ящиками Leset Кассио (Серый)',
     price: 62000,
     images: [
       'https://i.postimg.cc/ht2hjY8q/21.webp',
@@ -285,8 +285,8 @@ export const products: ProductType[] = [
   },
   {
     id: 'p15',
-    name: 'Комод в спальню с 7 ящиками Leset Ноа в Астане',
-    nameKz: 'Комод в спальню с 7 ящиками Leset Ноа в Астане',
+    name: 'Комод в спальню с 7 ящиками Leset Ноа',
+    nameKz: 'Комод в спальню с 7 ящиками Leset Ноа',
     price: 50000,
     images: [
       'https://i.postimg.cc/74sgqWQQ/1.webp'

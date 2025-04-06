@@ -55,7 +55,7 @@ const Navbar: React.FC = () => {
     { name: t('nav.catalog'), path: '/catalog' },
     { name: t('nav.about'), path: '/about' },
     { name: t('nav.delivery'), path: '/delivery' },
-    { name: t('nav.warranty'), path: '/warranty' },
+    { name: language === 'ru' ? 'Условия гарантии' : 'Кепілдік шарттары', path: '/warranty' },
     { name: t('nav.contacts'), path: '/contacts' }
   ];
 
