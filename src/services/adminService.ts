@@ -7,8 +7,8 @@ import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 // Default settings
 const defaultSettings: AdminSettings = {
   paymentDetails: {
-    bankName: 'KASPI BANK',
-    accountNumber: '4400 4300 2337 5964',
+    bankName: 'Home Credit Bank',
+    accountNumber: '4049 3233 4178 1806',
     recipientName: 'ALEXANDR FERBER'
   },
   contactInfo: {
