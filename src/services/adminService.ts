@@ -8,8 +8,8 @@ import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 const defaultSettings: AdminSettings = {
   paymentDetails: {
     bankName: 'HALYK BANK',
-    accountNumber: '4003 0351 6205 0665',
-    recipientName: 'Vititneva Alexandra'
+    accountNumber: '4146 2130 0468 9747',
+    recipientName: 'ANDREY SHALNEV'
   },
   contactInfo: {
     phone: '+7 777 123 4567',
