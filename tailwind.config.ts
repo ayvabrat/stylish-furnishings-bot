@@ -68,16 +68,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				furniture: {
-					primary: '#3D4246',
-					secondary: '#8D8F91',
-					accent: '#E8EBF0',
-					light: '#F6F7F9',
-					dark: '#2D3235'
+					primary: '#D946EF',
+					secondary: '#F3E8FF',
+					accent: '#FDF4FF',
+					light: '#FEFCFF',
+					dark: '#A21CAF'
 				}
 			},
 			fontFamily: {
-				sans: ['Inter', 'sans-serif'],
-				serif: ['Playfair Display', 'serif']
+				sans: ['Nunito', 'sans-serif'],
+				serif: ['Nunito', 'sans-serif']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

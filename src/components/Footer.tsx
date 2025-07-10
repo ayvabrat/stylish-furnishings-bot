@@ -17,38 +17,33 @@ const Footer: React.FC = () => {
           {/* Company info */}
           <div className="space-y-4">
             <Logo />
-            <p className="text-furniture-secondary text-sm mt-4">
-              pro-mebel.shop - {t('footer.companyName')}
+            <p className="text-furniture-secondary text-sm mt-4 font-medium">
+              My Kimmy - магазин стильных сумок для современных женщин
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="text-furniture-primary font-medium mb-4">{t('nav.catalog')}</h4>
+            <h4 className="text-furniture-primary font-bold mb-4">{t('nav.catalog')}</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/catalog/living-room" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
-                  {t('category.livingRoom')}
+                <Link to="/catalog/handbags" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm font-medium">
+                  Сумки
                 </Link>
               </li>
               <li>
-                <Link to="/catalog/bedroom" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
-                  {t('category.bedroom')}
+                <Link to="/catalog/backpacks" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm font-medium">
+                  Рюкзаки
                 </Link>
               </li>
               <li>
-                <Link to="/catalog/kitchen" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
-                  {t('category.kitchen')}
+                <Link to="/catalog/clutches" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm font-medium">
+                  Клатчи
                 </Link>
               </li>
               <li>
-                <Link to="/catalog/office" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
-                  {t('category.office')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/catalog/children" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
-                  {t('category.children')}
+                <Link to="/catalog/accessories" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm font-medium">
+                  Аксессуары
                 </Link>
               </li>
             </ul>
@@ -56,15 +51,15 @@ const Footer: React.FC = () => {
 
           {/* Information */}
           <div>
-            <h4 className="text-furniture-primary font-medium mb-4">{t('nav.about')}</h4>
+            <h4 className="text-furniture-primary font-bold mb-4">{t('nav.about')}</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/about" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
+                <Link to="/about" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm font-medium">
                   {t('nav.about')}
                 </Link>
               </li>
               <li>
-                <Link to="/delivery" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm">
+                <Link to="/delivery" className="text-furniture-secondary hover:text-furniture-primary transition-colors text-sm font-medium">
                   {t('nav.delivery')}
                 </Link>
               </li>
@@ -73,8 +68,8 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-furniture-secondary text-sm">
-            © {currentYear} pro-mebel.shop. {t('footer.rights')}.
+          <p className="text-furniture-secondary text-sm font-medium">
+            © {currentYear} My Kimmy. {t('footer.rights')}.
           </p>
           <div className="mt-4 md:mt-0">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6 inline-block mr-2" />

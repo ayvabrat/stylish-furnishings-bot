@@ -24,13 +24,13 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', variant = 'dark' }) => {
   return (
     <Link 
       to="/" 
-      className={`font-serif font-bold ${sizeClasses[size]} ${colorClasses[variant]} tracking-tight flex items-center transition-all duration-300 hover:opacity-90`}
+      className={`font-sans font-black ${sizeClasses[size]} ${colorClasses[variant]} tracking-wide flex items-center transition-all duration-300 hover:opacity-90`}
     >
       <span className="relative">
-        <span className="relative z-10">pro-mebel</span>
-        <span className="absolute -bottom-1 left-0 w-full h-[3px] bg-furniture-accent opacity-70"></span>
+        <span className="relative z-10">My Kimmy</span>
+        <span className="absolute -bottom-1 left-0 w-full h-[3px] bg-furniture-accent opacity-70 rounded-full"></span>
       </span>
-      <span className="text-furniture-secondary text-sm ml-1 mt-1">.shop</span>
+      <span className="text-furniture-secondary text-sm ml-2 mt-1 font-bold">.shop</span>
     </Link>
   );
 };
