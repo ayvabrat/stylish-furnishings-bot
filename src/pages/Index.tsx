@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
-import HomePromoArea from '@/components/HomePromoArea';
 import { Star, Heart, ShoppingBag, Truck, Shield, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -57,8 +56,8 @@ export default function Home() {
                   variants={itemVariants}
                 >
                   {language === 'ru'
-                    ? 'Откройте для себя коллекцию изысканных сумок, созданных для современных женщин'
-                    : 'Заманауи әйелдер үшін жасалған сәнді сөмкелердің жинақтарымен танысыңыз'}
+                    ? 'Откройте для себя коллекцию изысканных сумок'
+                    : 'Сәнді сөмкелердің жинақтарымен танысыңыз'}
                 </motion.p>
                 <motion.p 
                   className="text-2xl md:text-3xl mb-8 italic text-kimmy-pink font-bold flex items-center justify-center md:justify-start gap-2"
@@ -111,9 +110,6 @@ export default function Home() {
           </div>
         </div>
       </motion.section>
-
-      {/* Promo Code Banner Section */}
-      <HomePromoArea />
 
       {/* Features Section */}
       <motion.section 

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import PromoCodeBanner from './PromoCodeBanner';
 import { Heart, Gift, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -36,8 +35,6 @@ const HomePromoArea: React.FC = () => {
       variants={containerVariants}
     >
       <div className="max-w-screen-xl mx-auto">
-        <PromoCodeBanner />
-        
         <motion.h2 
           className="text-3xl md:text-4xl font-black mb-8 text-center text-kimmy-pink-dark flex items-center justify-center gap-3"
           variants={itemVariants}
