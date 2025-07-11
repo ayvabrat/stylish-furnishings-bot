@@ -2,70 +2,108 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PromoCodeBanner from './PromoCodeBanner';
+import { Heart, Gift, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const HomePromoArea: React.FC = () => {
   const { language } = useLanguage();
   
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: [0.19, 1, 0.22, 1] }
+    }
+  };
+  
   return (
-    <div className="container mx-auto px-4 md:px-6 pt-8">
+    <motion.div 
+      className="container mx-auto px-4 md:px-6 pt-8"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      variants={containerVariants}
+    >
       <div className="max-w-screen-xl mx-auto">
         <PromoCodeBanner />
         
-        <h2 className="text-2xl md:text-3xl font-black mb-6 text-center">
-          {language === 'ru' ? 'Почему выбирают My Kimmy?' : 'Неге My Kimmy таңдайды?'}
-        </h2>
+        <motion.h2 
+          className="text-3xl md:text-4xl font-black mb-8 text-center text-kimmy-pink-dark flex items-center justify-center gap-3"
+          variants={itemVariants}
+        >
+          <Heart className="w-8 h-8 text-kimmy-pink animate-heartbeat" fill="currentColor" />
+          {language === 'ru' ? 'Почему выбирают MY Kimmy?' : 'Неге MY Kimmy таңдайды?'}
+          <Heart className="w-8 h-8 text-kimmy-pink animate-heartbeat" fill="currentColor" />
+        </motion.h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-            <div className="w-16 h-16 bg-furniture-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-furniture-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+          variants={containerVariants}
+        >
+          <motion.div 
+            className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
+            variants={itemVariants}
+          >
+            <div className="w-20 h-20 bg-kimmy-pink/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-kimmy-pink/20 transition-all duration-300">
+              <Sparkles className="h-10 w-10 text-kimmy-pink group-hover:animate-pulse" />
             </div>
-            <h3 className="text-lg font-bold mb-2">
-              {language === 'ru' ? 'Качественные материалы' : 'Сапалы материалдар'}
+            <h3 className="text-xl font-bold mb-4 text-kimmy-pink-dark">
+              {language === 'ru' ? 'Эксклюзивный дизайн' : 'Эксклюзивті дизайн'}
             </h3>
-            <p className="text-gray-600 font-medium">
+            <p className="text-gray-600 font-medium leading-relaxed">
               {language === 'ru' 
-                ? 'Используем только премиальную кожу и прочные ткани для наших сумок' 
-                : 'Сөмкелеріміз үшін тек премиум тері мен берік маталарды қолданамыз'}
+                ? 'Каждая сумка создается с особым вниманием к деталям и современным трендам моды' 
+                : 'Әр сөмке бөлшектерге ерекше назар аударып және заманауи сән трендтерімен жасалады'}
             </p>
-          </div>
+          </motion.div>
           
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-            <div className="w-16 h-16 bg-furniture-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-furniture-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <motion.div 
+            className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
+            variants={itemVariants}
+          >
+            <div className="w-20 h-20 bg-kimmy-pink/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-kimmy-pink/20 transition-all duration-300">
+              <Gift className="h-10 w-10 text-kimmy-pink group-hover:animate-pulse" />
             </div>
-            <h3 className="text-lg font-bold mb-2">
-              {language === 'ru' ? 'Быстрая доставка' : 'Жылдам жеткізу'}
+            <h3 className="text-xl font-bold mb-4 text-kimmy-pink-dark">
+              {language === 'ru' ? 'Premium упаковка' : 'Premium орау'}
             </h3>
-            <p className="text-gray-600 font-medium">
+            <p className="text-gray-600 font-medium leading-relaxed">
               {language === 'ru' 
-                ? 'Доставляем по Алматы и области в кратчайшие сроки' 
-                : 'Алматы және облыс бойынша қысқа мерзімде жеткіземіз'}
+                ? 'Каждый заказ упаковывается в стильную подарочную упаковку с фирменными элементами' 
+                : 'Әр тапсырыс фирмалық элементтері бар стильді сыйлық орауышында оралады'}
             </p>
-          </div>
+          </motion.div>
           
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-            <div className="w-16 h-16 bg-furniture-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-furniture-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+          <motion.div 
+            className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
+            variants={itemVariants}
+          >
+            <div className="w-20 h-20 bg-kimmy-pink/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-kimmy-pink/20 transition-all duration-300">
+              <Heart className="h-10 w-10 text-kimmy-pink group-hover:animate-heartbeat" fill="currentColor" />
             </div>
-            <h3 className="text-lg font-bold mb-2">
-              {language === 'ru' ? 'Стильный дизайн' : 'Стильді дизайн'}
+            <h3 className="text-xl font-bold mb-4 text-kimmy-pink-dark">
+              {language === 'ru' ? 'Забота о клиентах' : 'Клиенттерге қамқорлық'}
             </h3>
-            <p className="text-gray-600 font-medium">
+            <p className="text-gray-600 font-medium leading-relaxed">
               {language === 'ru' 
-                ? 'Каждая сумка создана с любовью к деталям и современным трендам' 
-                : 'Әр сөмке бөлшектерге деген махаббатпен және заманауи трендтермен жасалған'}
+                ? 'Персональный подход к каждому клиенту и поддержка на всех этапах покупки' 
+                : 'Әр клиентке жеке көзқарас және сатып алудың барлық кезеңдерінде қолдау'}
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

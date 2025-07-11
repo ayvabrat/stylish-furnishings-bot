@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductType } from '@/types/product';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -18,6 +18,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   const { addItem } = useCart();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Format price with thousand separators
   const formattedPrice = product.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -29,7 +30,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
       opacity: 1, 
       y: 0,
       transition: { 
-        duration: 0.5,
+        duration: 0.6,
         delay: index * 0.1,
         ease: [0.19, 1, 0.22, 1]
       }
@@ -42,10 +43,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
     addItem(product);
   };
 
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFavorite(!isFavorite);
+  };
+
   // Default image if none available
   const productImage = product.images && product.images.length > 0 
     ? product.images[0] 
-    : 'https://via.placeholder.com/300x300?text=No+Image';
+    : 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=400&auto=format&fit=crop';
 
   return (
     <motion.div 
@@ -56,25 +63,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
       className="group h-full"
     >
       <Link to={`/product/${product.id}`} className="block h-full">
-        <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md hover:translate-y-[-4px] h-full flex flex-col">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-kimmy-pink/10 transition-all duration-500 hover:shadow-2xl hover:translate-y-[-8px] hover:border-kimmy-pink/30 h-full flex flex-col relative">
+          {/* Favorite heart button */}
+          <button
+            onClick={handleFavoriteToggle}
+            className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110"
+          >
+            <Heart 
+              className={`w-5 h-5 transition-all duration-300 ${
+                isFavorite 
+                  ? 'text-kimmy-pink fill-current animate-heartbeat' 
+                  : 'text-gray-400 hover:text-kimmy-pink'
+              }`}
+            />
+          </button>
+
           {/* Product image */}
-          <div className="relative aspect-square overflow-hidden bg-furniture-accent/20">
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          <div className="relative aspect-square overflow-hidden bg-kimmy-pink-light/20">
+            <div className="w-full h-full bg-gradient-to-br from-kimmy-pink-light to-white flex items-center justify-center">
               {!isImageLoaded && !hasError && (
-                <div className="animate-pulse w-full h-full bg-furniture-accent/30"></div>
+                <div className="animate-pulse w-full h-full bg-kimmy-pink/10 shimmer-effect"></div>
               )}
               
               {/* Fallback for image errors */}
               {hasError && (
-                <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                  <div className="text-gray-400 text-sm">{language === 'ru' ? product.name : (product.nameKz || product.name)}</div>
+                <div className="w-full h-full flex items-center justify-center bg-kimmy-pink-light">
+                  <div className="text-kimmy-pink text-sm font-medium text-center p-4">
+                    {language === 'ru' ? product.name : (product.nameKz || product.name)}
+                  </div>
                 </div>
               )}
               
               <img 
                 src={productImage} 
                 alt={language === 'ru' ? product.name : (product.nameKz || product.name)}
-                className={`w-full h-full object-cover transition-all duration-500 ease-out-expo ${
+                className={`w-full h-full object-cover transition-all duration-700 ease-out-expo ${
                   isImageLoaded && !hasError ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                 }`}
                 onLoad={() => setIsImageLoaded(true)}
@@ -85,29 +108,37 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
               />
             </div>
             
-            {/* Add to cart button */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+            {/* Add to cart button overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end justify-center pb-4">
               <Button
                 onClick={handleAddToCart}
-                variant="secondary"
                 size="sm"
-                className="bg-white hover:bg-furniture-primary hover:text-white transition-all duration-300 shadow-md"
+                className="bg-kimmy-pink hover:bg-kimmy-pink-dark text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 rounded-full px-6"
               >
                 <ShoppingCart size={16} className="mr-2" />
-                {t('product.addToCart')}
+                {language === 'ru' ? 'В корзину' : 'Себетке'}
               </Button>
             </div>
           </div>
           
           {/* Product info */}
-          <div className="p-4 flex flex-col flex-grow">
-            <h3 className="text-furniture-primary font-medium text-sm md:text-base mb-1 line-clamp-2">
+          <div className="p-6 flex flex-col flex-grow">
+            <h3 className="text-kimmy-pink-dark font-bold text-base md:text-lg mb-2 line-clamp-2 leading-tight">
               {language === 'ru' ? product.name : (product.nameKz || product.name)}
             </h3>
-            <div className="mt-auto pt-2">
-              <p className="font-semibold text-furniture-primary">
-                {formattedPrice} {t('product.currency')}
-              </p>
+            <div className="mt-auto">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xl md:text-2xl font-black text-kimmy-pink block">
+                    {formattedPrice} ₽
+                  </span>
+                  <span className="text-gray-500 text-xs block mt-1">
+                    {product.inStock 
+                      ? (language === 'ru' ? 'В наличии' : 'Қолда бар') 
+                      : (language === 'ru' ? 'Нет в наличии' : 'Қолда жоқ')}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
