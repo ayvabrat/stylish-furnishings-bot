@@ -1,4 +1,4 @@
-й
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -97,7 +97,7 @@ export default function Home() {
                     style={{ animationDelay: '1s' }}
                   ></motion.div>
                   <img 
-                    src="https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg" 
+                    src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=1200&auto=format&fit=crop" 
                     alt={language === 'ru' ? 'Стильная сумка' : 'Стильді сөмке'} 
                     className="w-full h-auto rounded-2xl shadow-2xl object-cover hover-scale"
                   />
@@ -206,7 +206,7 @@ export default function Home() {
                 variants={itemVariants}
               >
                 <img 
-                  src="https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg" 
+                  src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=1200&auto=format&fit=crop" 
                   alt={language === 'ru' ? 'Модная женщина с сумкой' : 'Сәнді әйел сөмкемен'}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
@@ -256,9 +256,9 @@ export default function Home() {
                   <span className="text-sm text-gray-500">Москва</span>
                 </div>
                 <p className="text-gray-700 leading-relaxed">
-                  Заказала розовую сумку через плечо из новой коллекции MY Kimmy. Качество превзошло все ожидания! 
+                  "Заказала розовую сумку через плечо из новой коллекции MY Kimmy. Качество превзошло все ожидания! 
                   Материал очень приятный на ощупь, фурнитура качественная. Сумка идеально дополнила мой гардероб. 
-                  Доставка была быстрой, упаковка красивая. Обязательно закажу еще!
+                  Доставка была быстрой, упаковка красивая. Обязательно закажу еще!"
                 </p>
               </motion.div>
               
@@ -283,9 +283,9 @@ export default function Home() {
                   <span className="text-sm text-gray-500">СПб</span>
                 </div>
                 <p className="text-gray-700 leading-relaxed">
-                  Искала стильную сумку для работы и нашла именно то, что нужно в MY Kimmy. 
+                  "Искала стильную сумку для работы и нашла именно то, что нужно в MY Kimmy. 
                   Сумка вместительная, но при этом элегантная. Очень удобные ручки и качественная подкладка. 
-                  Получаю комплименты каждый день! Спасибо за отличный сервис и красивую упаковку.
+                  Получаю комплименты каждый день! Спасибо за отличный сервис и красивую упаковку."
                 </p>
               </motion.div>
             </div>
