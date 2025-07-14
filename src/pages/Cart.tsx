@@ -7,14 +7,12 @@ import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils';
 
 const Cart = () => {
   const { language, t } = useLanguage();
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
   const navigate = useNavigate();
-  
-  // Format price with thousand separators
-  const formattedTotalPrice = totalPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   
   // Cart item animation variants
   const cartItemVariants = {
@@ -64,85 +62,79 @@ const Cart = () => {
                 <div className="lg:col-span-2">
                   <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                     <ul className="divide-y divide-gray-100">
-                      {items.map((item, index) => {
-                        // Format item price
-                        const formattedPrice = item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-                        const formattedItemTotal = (item.price * item.quantity).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-                        
-                        return (
-                          <motion.li 
-                            key={item.id}
-                            custom={index}
-                            variants={cartItemVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="p-4 md:p-6"
-                          >
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              {/* Product image */}
-                              <div className="w-24 h-24 flex-shrink-0 mb-4 sm:mb-0">
-                                <Link to={`/product/${item.id}`}>
-                                  <img 
-                                    src={item.images[0]} 
-                                    alt={language === 'ru' ? item.name : (item.nameKz || item.name)} 
-                                    className="w-full h-full object-cover rounded-md"
-                                  />
-                                </Link>
-                              </div>
-                              
-                              {/* Product details */}
-                              <div className="flex-grow sm:ml-4">
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <div>
-                                    <Link to={`/product/${item.id}`} className="text-furniture-primary font-medium hover:underline">
-                                      {language === 'ru' ? item.name : (item.nameKz || item.name)}
-                                    </Link>
-                                    <p className="text-furniture-secondary text-sm mt-1">
-                                      {formattedPrice} {t('product.currency')}
-                                    </p>
-                                  </div>
+                      {items.map((item, index) => (
+                        <motion.li 
+                          key={item.id}
+                          custom={index}
+                          variants={cartItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          className="p-4 md:p-6"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center">
+                            {/* Product image */}
+                            <div className="w-24 h-24 flex-shrink-0 mb-4 sm:mb-0">
+                              <Link to={`/product/${item.id}`}>
+                                <img 
+                                  src={item.images[0]} 
+                                  alt={language === 'ru' ? item.name : (item.nameKz || item.name)} 
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                              </Link>
+                            </div>
+                            
+                            {/* Product details */}
+                            <div className="flex-grow sm:ml-4">
+                              <div className="flex flex-col sm:flex-row sm:justify-between">
+                                <div>
+                                  <Link to={`/product/${item.id}`} className="text-furniture-primary font-medium hover:underline">
+                                    {language === 'ru' ? item.name : (item.nameKz || item.name)}
+                                  </Link>
+                                  <p className="text-furniture-secondary text-sm mt-1">
+                                    {formatPrice(item.price)}
+                                  </p>
+                                </div>
+                                
+                                <div className="mt-4 sm:mt-0 flex flex-col items-start sm:items-end">
+                                  <p className="font-semibold">
+                                    {formatPrice(item.price * item.quantity)}
+                                  </p>
                                   
-                                  <div className="mt-4 sm:mt-0 flex flex-col items-start sm:items-end">
-                                    <p className="font-semibold">
-                                      {formattedItemTotal} {t('product.currency')}
-                                    </p>
-                                    
-                                    <div className="flex items-center mt-2">
-                                      {/* Quantity controls */}
-                                      <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
-                                        <button
-                                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                          className="w-8 h-8 flex items-center justify-center text-furniture-secondary hover:bg-furniture-light"
-                                          disabled={item.quantity <= 1}
-                                        >
-                                          <ChevronLeft size={16} />
-                                        </button>
-                                        <span className="w-10 text-center">{item.quantity}</span>
-                                        <button
-                                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                          className="w-8 h-8 flex items-center justify-center text-furniture-secondary hover:bg-furniture-light"
-                                        >
-                                          <ChevronRight size={16} />
-                                        </button>
-                                      </div>
-                                      
-                                      {/* Remove button */}
+                                  <div className="flex items-center mt-2">
+                                    {/* Quantity controls */}
+                                    <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
                                       <button
-                                        onClick={() => removeItem(item.id)}
-                                        className="ml-4 text-furniture-secondary hover:text-red-500 transition-colors"
-                                        aria-label={t('cart.remove')}
+                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                        className="w-8 h-8 flex items-center justify-center text-furniture-secondary hover:bg-furniture-light"
+                                        disabled={item.quantity <= 1}
                                       >
-                                        <Trash2 size={18} />
+                                        <ChevronLeft size={16} />
+                                      </button>
+                                      <span className="w-10 text-center">{item.quantity}</span>
+                                      <button
+                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                        className="w-8 h-8 flex items-center justify-center text-furniture-secondary hover:bg-furniture-light"
+                                      >
+                                        <ChevronRight size={16} />
                                       </button>
                                     </div>
+                                    
+                                    {/* Remove button */}
+                                    <button
+                                      onClick={() => removeItem(item.id)}
+                                      className="ml-4 text-furniture-secondary hover:text-red-500 transition-colors"
+                                      aria-label={t('cart.remove')}
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </motion.li>
-                        );
-                      })}
+                          </div>
+                        </motion.li>
+                      ))}
                     </ul>
                   </div>
                 </div>
@@ -162,14 +154,14 @@ const Cart = () => {
                             : `Тауарлар (${items.length})`}
                         </span>
                         <span className="font-medium">
-                          {formattedTotalPrice} {t('product.currency')}
+                          {formatPrice(totalPrice)}
                         </span>
                       </div>
                     </div>
                     
                     <div className="flex justify-between items-center font-semibold text-lg mb-6">
                       <span>{t('cart.total')}</span>
-                      <span>{formattedTotalPrice} {t('product.currency')}</span>
+                      <span>{formatPrice(totalPrice)}</span>
                     </div>
                     
                     <Button 

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ProductType } from '@/types/product';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils';
 
 interface ProductCardProps {
   product: ProductType;
@@ -19,9 +20,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-
-  // Format price with thousand separators
-  const formattedPrice = product.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
   // Animation variants
   const cardVariants = {
@@ -130,7 +128,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xl md:text-2xl font-black text-kimmy-pink block">
-                    {formattedPrice} ₽
+                    {formatPrice(product.price)}
                   </span>
                   <span className="text-gray-500 text-xs block mt-1">
                     {product.inStock 

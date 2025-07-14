@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Heart } from 'lucide-react';
+import { Phone, Mail, MapPin, Heart, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Logo from './Logo';
 
@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="gradient-pink border-t border-kimmy-pink/20">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company info */}
           <div className="space-y-4">
             <Logo />
@@ -85,6 +85,27 @@ const Footer: React.FC = () => {
                 <Link to="/privacy-policy" className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium">
                   {language === 'ru' ? 'Политика конфиденциальности' : 'Құпиялылық саясаты'}
                 </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h4 className="text-kimmy-pink-dark font-bold mb-4 flex items-center gap-2">
+              <Heart className="w-4 h-4" fill="currentColor" />
+              {language === 'ru' ? 'Связь с нами' : 'Бізбен байланыс'}
+            </h4>
+            <ul className="space-y-2">
+              <li>
+                <a 
+                  href="https://t.me/qswpr" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Telegram
+                </a>
               </li>
             </ul>
           </div>
