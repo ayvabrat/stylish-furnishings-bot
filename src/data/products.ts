@@ -9,7 +9,7 @@ export const categories: CategoryType[] = [
       ru: 'Сумки',
       kz: 'Сөмкелер'
     },
-    image: 'https://s3.iimg.su/s/13/49izzvNxfsO1twUEAxwHFpHOXaHIspDowVxnHzsr.jpg',
+    image: 'https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg',
     slug: 'bags'
   }
 ];
@@ -20,7 +20,7 @@ export const products: ProductType[] = [
     id: 'p1',
     name: 'Сумка',
     nameKz: 'Сөмке',
-    price: 2499,
+    price: 990,
     images: [
       'https://s3.iimg.su/s/13/49izzvNxfsO1twUEAxwHFpHOXaHIspDowVxnHzsr.jpg',
       'https://s3.iimg.su/s/13/l2ZuZSN26Al5BA3bkrbtLfSB31vZ9tUrkH9j54X2.jpg'

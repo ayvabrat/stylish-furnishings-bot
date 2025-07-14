@@ -50,7 +50,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   // Default image if none available
   const productImage = product.images && product.images.length > 0 
     ? product.images[0] 
-    : 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=400&auto=format&fit=crop';
+    : 'https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg';
 
   return (
     <motion.div 

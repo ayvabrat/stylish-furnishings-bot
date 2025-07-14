@@ -10,6 +10,7 @@ import ProductGrid from '@/components/ProductGrid';
 import { getProductById, getRelatedProducts } from '@/data/products';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/utils';
 
 const Product = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -38,9 +39,6 @@ const Product = () => {
   if (!product) {
     return <div>Product not found</div>;
   }
-
-  // Format price with thousand separators
-  const formattedPrice = product.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   
   // Handle image navigation
   const goToNextImage = () => {
@@ -158,7 +156,7 @@ const Product = () => {
                 
                 <div className="mb-6">
                   <span className="text-xl md:text-2xl font-bold text-furniture-primary block">
-                    {formattedPrice} {t('product.currency')}
+                    {formatPrice(product.price)}
                   </span>
                   <span className="text-furniture-secondary text-sm block mt-1">
                     {product.inStock 
