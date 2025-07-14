@@ -81,11 +81,31 @@ const Footer: React.FC = () => {
                   {language === 'ru' ? 'Гарантия качества' : 'Сапа кепілдігі'}
                 </Link>
               </li>
+              <li>
+                <Link to="/privacy-policy" className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium">
+                  {language === 'ru' ? 'Политика конфиденциальности' : 'Құпиялылық саясаты'}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-kimmy-pink/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+        {/* Individual Entrepreneur Info */}
+        <div className="border-t border-kimmy-pink/20 mt-8 pt-6">
+          <div className="text-center space-y-2">
+            <p className="text-gray-600 text-sm font-medium">
+              {language === 'ru' ? 'Самозанятая Юнева Полина Сергеевна' : 'Жеке кәсіпкер Юнева Полина Сергеевна'}
+            </p>
+            <p className="text-gray-600 text-xs">
+              ИНН: 644308330314
+            </p>
+            <p className="text-gray-600 text-xs">
+              г. Саратов
+            </p>
+          </div>
+        </div>
+
+        <div className="border-t border-kimmy-pink/20 mt-6 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-600 text-sm font-medium flex items-center gap-2">
             <Heart className="w-4 h-4 text-kimmy-pink animate-heartbeat" fill="currentColor" />
             © {currentYear} MY Kimmy. {language === 'ru' ? 'Все права защищены' : 'Барлық құқықтар қорғалған'}.

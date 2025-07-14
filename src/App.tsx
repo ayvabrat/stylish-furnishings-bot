@@ -20,6 +20,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import About from "./pages/About";
 import Delivery from "./pages/Delivery";
 import Warranty from "./pages/Warranty";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -56,6 +57,7 @@ const App = () => (
                     <Route path="/about" element={<About />} />
                     <Route path="/delivery" element={<Delivery />} />
                     <Route path="/warranty" element={<Warranty />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />
