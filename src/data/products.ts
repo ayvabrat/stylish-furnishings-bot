@@ -14,7 +14,7 @@ export const categories: CategoryType[] = [
   }
 ];
 
-// Products - только одна сумка
+// Products - только одна сумка с обновленными данными
 export const products: ProductType[] = [
   {
     id: 'p1',
@@ -22,14 +22,22 @@ export const products: ProductType[] = [
     nameKz: 'Сөмке',
     price: 990,
     images: [
-      'https://s3.iimg.su/s/13/49izzvNxfsO1twUEAxwHFpHOXaHIspDowVxnHzsr.jpg',
-      'https://s3.iimg.su/s/13/l2ZuZSN26Al5BA3bkrbtLfSB31vZ9tUrkH9j54X2.jpg'
+      'https://s3.iimg.su/s/07/gCocQqqxKiWqvoPEIGL4qiSmjwObnvpberW6BpKN.jpg',
+      'https://s3.iimg.su/s/07/gtHDPhWxJmPulDlY2G8grid7qC5Tq9hb4gaaaegU.jpg'
     ],
     category: 'bags',
     characteristics: {
       dimensions: '24х15х7 см',
       material: 'Полиэстер',
-      color: 'Белый'
+      color: 'Белый',
+      lining: 'Текстиль',
+      closureType: 'Молния',
+      strap: 'НеРегулируемый',
+      countryOfOrigin: 'Китай'
+    },
+    description: {
+      ru: 'Отличное дополнение к любому образу',
+      kz: 'Кез келген бейнеге тамаша толықтыру'
     },
     inStock: true,
     isPopular: true

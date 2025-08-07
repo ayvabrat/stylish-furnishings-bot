@@ -47,7 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
     setIsFavorite(!isFavorite);
   };
 
-  // Default image if none available
+  // Default image if none available - updated to new image
   const productImage = product.images && product.images.length > 0 
     ? product.images[0] 
     : 'https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg';
@@ -124,6 +124,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
             <h3 className="text-kimmy-pink-dark font-bold text-base md:text-lg mb-2 line-clamp-2 leading-tight">
               {language === 'ru' ? product.name : (product.nameKz || product.name)}
             </h3>
+            
+            {/* Product description */}
+            {product.description && (
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                {language === 'ru' ? product.description.ru : product.description.kz}
+              </p>
+            )}
+            
             <div className="mt-auto">
               <div className="flex items-center justify-between">
                 <div>

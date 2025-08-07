@@ -154,6 +154,15 @@ const Product = () => {
                   {language === 'ru' ? product.name : (product.nameKz || product.name)}
                 </h1>
                 
+                {/* Product description */}
+                {product.description && (
+                  <div className="mb-6">
+                    <p className="text-furniture-secondary text-base">
+                      {language === 'ru' ? product.description.ru : product.description.kz}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="mb-6">
                   <span className="text-xl md:text-2xl font-bold text-furniture-primary block">
                     {formatPrice(product.price)}
@@ -188,23 +197,61 @@ const Product = () => {
                 
                 {/* Product characteristics */}
                 <div className="mt-4">
-                  <h2 className="text-lg font-medium mb-3">
+                  <h2 className="text-lg font-medium mb-4">
                     {language === 'ru' ? 'Характеристики' : 'Сипаттамалары'}
                   </h2>
-                  <ul className="space-y-2">
-                    <li className="flex">
-                      <span className="font-medium w-32 text-furniture-primary">{t('product.dimensions')}:</span>
+                  <div className="space-y-3">
+                    <div className="flex">
+                      <span className="font-medium w-40 text-furniture-primary">
+                        {language === 'ru' ? 'Размеры:' : 'Өлшемдер:'}
+                      </span>
                       <span className="text-furniture-secondary">{product.characteristics.dimensions}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32 text-furniture-primary">{t('product.material')}:</span>
+                    </div>
+                    <div className="flex">
+                      <span className="font-medium w-40 text-furniture-primary">
+                        {language === 'ru' ? 'Материал:' : 'Материал:'}
+                      </span>
                       <span className="text-furniture-secondary">{product.characteristics.material}</span>
-                    </li>
-                    <li className="flex">
-                      <span className="font-medium w-32 text-furniture-primary">{t('product.color')}:</span>
+                    </div>
+                    <div className="flex">
+                      <span className="font-medium w-40 text-furniture-primary">
+                        {language === 'ru' ? 'Цвет:' : 'Түс:'}
+                      </span>
                       <span className="text-furniture-secondary">{product.characteristics.color}</span>
-                    </li>
-                  </ul>
+                    </div>
+                    {product.characteristics.lining && (
+                      <div className="flex">
+                        <span className="font-medium w-40 text-furniture-primary">
+                          {language === 'ru' ? 'Подкладка:' : 'Астар:'}
+                        </span>
+                        <span className="text-furniture-secondary">{product.characteristics.lining}</span>
+                      </div>
+                    )}
+                    {product.characteristics.closureType && (
+                      <div className="flex">
+                        <span className="font-medium w-40 text-furniture-primary">
+                          {language === 'ru' ? 'Тип застёжки:' : 'Бекіткіш түрі:'}
+                        </span>
+                        <span className="text-furniture-secondary">{product.characteristics.closureType}</span>
+                      </div>
+                    )}
+                    {product.characteristics.strap && (
+                      <div className="flex">
+                        <span className="font-medium w-40 text-furniture-primary">
+                          {language === 'ru' ? 'Ремешок:' : 'Белдік:'}
+                        </span>
+                        <span className="text-furniture-secondary">{product.characteristics.strap}</span>
+                      </div>
+                    )}
+                    {product.characteristics.countryOfOrigin && (
+                      <div className="flex">
+                        <span className="font-medium w-40 text-furniture-primary">
+                          {language === 'ru' ? 'Страна производства:' : 'Өндіруші ел:'}
+                        </span>
+                        <span className="text-furniture-secondary">{product.characteristics.countryOfOrigin}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

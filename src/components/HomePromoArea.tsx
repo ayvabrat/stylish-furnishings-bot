@@ -51,6 +51,11 @@ const HomePromoArea: React.FC = () => {
           <motion.div 
             className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
             variants={itemVariants}
+            style={{
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
           >
             <div className="w-20 h-20 bg-kimmy-pink/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-kimmy-pink/20 transition-all duration-300">
               <Sparkles className="h-10 w-10 text-kimmy-pink group-hover:animate-pulse" />
@@ -58,7 +63,7 @@ const HomePromoArea: React.FC = () => {
             <h3 className="text-xl font-bold mb-4 text-kimmy-pink-dark">
               {language === 'ru' ? 'Эксклюзивный дизайн' : 'Эксклюзивті дизайн'}
             </h3>
-            <p className="text-gray-600 font-medium leading-relaxed">
+            <p className="text-gray-700 font-medium leading-relaxed">
               {language === 'ru' 
                 ? 'Каждая сумка создается с особым вниманием к деталям и современным трендам моды' 
                 : 'Әр сөмке бөлшектерге ерекше назар аударып және заманауи сән трендтерімен жасалады'}
@@ -68,6 +73,11 @@ const HomePromoArea: React.FC = () => {
           <motion.div 
             className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
             variants={itemVariants}
+            style={{
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
           >
             <div className="w-20 h-20 bg-kimmy-pink/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-kimmy-pink/20 transition-all duration-300">
               <Gift className="h-10 w-10 text-kimmy-pink group-hover:animate-pulse" />
@@ -75,7 +85,7 @@ const HomePromoArea: React.FC = () => {
             <h3 className="text-xl font-bold mb-4 text-kimmy-pink-dark">
               {language === 'ru' ? 'Premium упаковка' : 'Premium орау'}
             </h3>
-            <p className="text-gray-600 font-medium leading-relaxed">
+            <p className="text-gray-700 font-medium leading-relaxed">
               {language === 'ru' 
                 ? 'Каждый заказ упаковывается в стильную подарочную упаковку с фирменными элементами' 
                 : 'Әр тапсырыс фирмалық элементтері бар стильді сыйлық орауышында оралады'}
@@ -85,6 +95,11 @@ const HomePromoArea: React.FC = () => {
           <motion.div 
             className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
             variants={itemVariants}
+            style={{
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
           >
             <div className="w-20 h-20 bg-kimmy-pink/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-kimmy-pink/20 transition-all duration-300">
               <Heart className="h-10 w-10 text-kimmy-pink group-hover:animate-heartbeat" fill="currentColor" />
@@ -92,7 +107,7 @@ const HomePromoArea: React.FC = () => {
             <h3 className="text-xl font-bold mb-4 text-kimmy-pink-dark">
               {language === 'ru' ? 'Забота о клиентах' : 'Клиенттерге қамқорлық'}
             </h3>
-            <p className="text-gray-600 font-medium leading-relaxed">
+            <p className="text-gray-700 font-medium leading-relaxed">
               {language === 'ru' 
                 ? 'Персональный подход к каждому клиенту и поддержка на всех этапах покупки' 
                 : 'Әр клиентке жеке көзқарас және сатып алудың барлық кезеңдерінде қолдау'}

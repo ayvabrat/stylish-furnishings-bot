@@ -10,6 +10,14 @@ export interface ProductType {
     dimensions: string;
     material: string;
     color: string;
+    lining?: string;
+    closureType?: string;
+    strap?: string;
+    countryOfOrigin?: string;
+  };
+  description?: {
+    ru: string;
+    kz: string;
   };
   inStock: boolean;
   isPopular?: boolean;
