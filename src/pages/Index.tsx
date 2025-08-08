@@ -97,7 +97,7 @@ export default function Home() {
                     style={{ animationDelay: '1s' }}
                   ></motion.div>
                   <img 
-                    src="https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg" 
+                    src="https://s3.iimg.su/s/08/gQVxhBCxCHs9PsMnfn9X3dXyz166SSZip2dbdze2.jpg" 
                     alt={language === 'ru' ? 'Стильная сумка' : 'Стильді сөмке'} 
                     className="w-full h-auto rounded-2xl shadow-2xl object-cover hover-scale"
                   />
@@ -206,7 +206,7 @@ export default function Home() {
                 variants={itemVariants}
               >
                 <img 
-                  src="https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg" 
+                  src="https://s3.iimg.su/s/08/gQVxhBCxCHs9PsMnfn9X3dXyz166SSZip2dbdze2.jpg" 
                   alt={language === 'ru' ? 'Модная женщина с сумкой' : 'Сәнді әйел сөмкемен'}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />

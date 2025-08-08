@@ -52,7 +52,7 @@ const HomePromoArea: React.FC = () => {
             className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
             variants={itemVariants}
             style={{
-              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg')`,
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/08/gQVxhBCxCHs9PsMnfn9X3dXyz166SSZip2dbdze2.jpg')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -74,7 +74,7 @@ const HomePromoArea: React.FC = () => {
             className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
             variants={itemVariants}
             style={{
-              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg')`,
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/08/gQVxhBCxCHs9PsMnfn9X3dXyz166SSZip2dbdze2.jpg')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
@@ -96,7 +96,7 @@ const HomePromoArea: React.FC = () => {
             className="glass-card p-8 text-center group hover:-translate-y-2 transition-all duration-300"
             variants={itemVariants}
             style={{
-              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg')`,
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8)), url('https://s3.iimg.su/s/08/gQVxhBCxCHs9PsMnfn9X3dXyz166SSZip2dbdze2.jpg')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}

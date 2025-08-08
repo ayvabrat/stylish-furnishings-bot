@@ -120,7 +120,7 @@ const About = () => {
             >
               <div className="aspect-[16/9] rounded-2xl overflow-hidden shadow-2xl">
                 <img 
-                  src="https://s3.iimg.su/s/14/Cjj6DJKqDK9j4ubDVJhofAcAalWhIJPFJAdyiLEo.jpg" 
+                  src="https://s3.iimg.su/s/08/gQVxhBCxCHs9PsMnfn9X3dXyz166SSZip2dbdze2.jpg" 
                   alt={language === 'ru' ? 'MY Kimmy коллекция' : 'MY Kimmy жинақ'}
                   className="w-full h-full object-cover hover-scale transition-transform duration-700"
                 />
