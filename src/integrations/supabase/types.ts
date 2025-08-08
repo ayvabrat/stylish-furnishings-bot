@@ -14,7 +14,199 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          name_kk: string | null
+          name_ru: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name_kk?: string | null
+          name_ru: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name_kk?: string | null
+          name_ru?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          price: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          price: number
+          product_id?: string | null
+          product_name: string
+          quantity: number
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          additional_notes: string | null
+          city: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_address: string | null
+          discount_amount: number
+          id: string
+          payment_method: string
+          payment_purpose: string | null
+          payment_status: string | null
+          postal_code: string | null
+          promotion_code: string | null
+          receipt_url: string | null
+          reference: string
+          status: string
+          total_amount: number
+          yoomoney_payment_id: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          city?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_address?: string | null
+          discount_amount?: number
+          id?: string
+          payment_method: string
+          payment_purpose?: string | null
+          payment_status?: string | null
+          postal_code?: string | null
+          promotion_code?: string | null
+          receipt_url?: string | null
+          reference: string
+          status?: string
+          total_amount: number
+          yoomoney_payment_id?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          city?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          delivery_address?: string | null
+          discount_amount?: number
+          id?: string
+          payment_method?: string
+          payment_purpose?: string | null
+          payment_status?: string | null
+          postal_code?: string | null
+          promotion_code?: string | null
+          receipt_url?: string | null
+          reference?: string
+          status?: string
+          total_amount?: number
+          yoomoney_payment_id?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description_kk: string | null
+          description_ru: string | null
+          id: string
+          images: string[]
+          in_stock: boolean
+          is_new: boolean
+          is_popular: boolean
+          name_kk: string | null
+          name_ru: string
+          price: number
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description_kk?: string | null
+          description_ru?: string | null
+          id?: string
+          images?: string[]
+          in_stock?: boolean
+          is_new?: boolean
+          is_popular?: boolean
+          name_kk?: string | null
+          name_ru: string
+          price: number
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description_kk?: string | null
+          description_ru?: string | null
+          id?: string
+          images?: string[]
+          in_stock?: boolean
+          is_new?: boolean
+          is_popular?: boolean
+          name_kk?: string | null
+          name_ru?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          key: string
+          value: string | null
+        }
+        Insert: {
+          key: string
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
