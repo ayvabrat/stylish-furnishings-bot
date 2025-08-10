@@ -32,6 +32,7 @@ import AdminSettings from "./pages/Admin/Settings";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import AddProduct from "./pages/Admin/AddProduct";
 import EditProduct from "./pages/Admin/EditProduct";
+import PayTest from "./pages/PayTest";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
                     <Route path="/delivery" element={<Delivery />} />
                     <Route path="/warranty" element={<Warranty />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/pay-test" element={<PayTest />} />
                     
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />
