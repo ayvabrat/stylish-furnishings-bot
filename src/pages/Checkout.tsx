@@ -20,6 +20,7 @@ import { fetchAdminSettings } from '@/services/adminService';
 import { formatPrice } from '@/lib/utils';
 import PromoCodeInput from '@/components/PromoCodeInput';
 import { AdminSettings } from '@/types/admin';
+import { supabase } from '@/integrations/supabase/client';
 
 // Function to generate payment purpose with random characters and promo code digits
 const generatePaymentPurpose = (promoCode: string | undefined) => {
@@ -46,7 +47,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer'>('bank_transfer');
+  const [paymentMethod, setPaymentMethod] = useState<'yoomoney' | 'bank_transfer'>('yoomoney');
   const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
   const [progressValue, setProgressValue] = useState(0);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -168,10 +169,13 @@ const CheckoutPage = () => {
     }
     
     setIsSubmitting(true);
-    setShowPaymentDialog(true);
-    setProgressValue(0);
-    setShowPaymentInfo(false);
-    setLoadingOrder(true);
+    
+    if (paymentMethod === 'bank_transfer') {
+      setShowPaymentDialog(true);
+      setProgressValue(0);
+      setShowPaymentInfo(false);
+      setLoadingOrder(true);
+    }
     
     const interval = setInterval(() => {
       setProgressValue(prev => {
@@ -206,27 +210,79 @@ const CheckoutPage = () => {
       
       console.log('Order created with ID:', response.orderId);
       
-      setOrderId(response.orderId);
-      setPaymentDetails({
-        ...response.paymentDetails,
-        purpose: paymentPurpose
-      });
-      setProgressValue(100);
-      setShowPaymentInfo(true);
-      setLoadingOrder(false);
-      
-      if (response.orderId !== 'error' && response.orderId !== 'temporary') {
-        clearCart();
-        
-        toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
-          duration: 3000
+      if (paymentMethod === 'yoomoney') {
+        // Создать платеж через YooMoney
+        try {
+          console.log('Creating YooMoney payment...');
+          const { data: paymentData, error: paymentError } = await supabase.functions.invoke('yoomoney-create-payment', {
+            body: {
+              orderId: response.orderId,
+              amount: total,
+              description: `Оплата заказа ${response.reference || response.orderId}`
+            }
+          });
+          
+          if (paymentError) {
+            console.error('YooMoney payment error:', paymentError);
+            toast.error(
+              language === 'ru' 
+                ? 'Ошибка при создании платежа. Попробуйте еще раз.' 
+                : 'Төлем жасау кезінде қате. Қайталап көріңіз.',
+              { duration: 5000 }
+            );
+            return;
+          }
+          
+          if (paymentData?.confirmation_url) {
+            console.log('Redirecting to YooMoney:', paymentData.confirmation_url);
+            // Очищаем корзину перед перенаправлением
+            clearCart();
+            // Перенаправляем на YooMoney
+            window.location.href = paymentData.confirmation_url;
+          } else {
+            throw new Error('No confirmation URL received');
+          }
+        } catch (error) {
+          console.error('Failed to create YooMoney payment:', error);
+          toast.error(
+            language === 'ru' 
+              ? 'Не удалось создать платеж. Попробуйте еще раз.' 
+              : 'Төлем жасау мүмкін болмады. Қайталап көріңіз.',
+            { duration: 5000 }
+          );
+        }
+      } else {
+        // Банковский перевод - показываем реквизиты
+        setOrderId(response.orderId);
+        setPaymentDetails({
+          ...response.paymentDetails,
+          purpose: paymentPurpose
         });
+        setProgressValue(100);
+        setShowPaymentInfo(true);
+        setLoadingOrder(false);
+        
+        if (response.orderId !== 'error' && response.orderId !== 'temporary') {
+          clearCart();
+          
+          toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
+            duration: 3000
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to create order:', error);
-      setProgressValue(100);
-      setShowPaymentInfo(true);
-      setLoadingOrder(false);
+      if (paymentMethod === 'bank_transfer') {
+        setProgressValue(100);
+        setShowPaymentInfo(true);
+        setLoadingOrder(false);
+      }
+      toast.error(
+        language === 'ru' 
+          ? 'Не удалось создать заказ. Попробуйте еще раз.' 
+          : 'Тапсырыс жасау мүмкін болмады. Қайталап көріңіз.',
+        { duration: 5000 }
+      );
     } finally {
       if (progressInterval) {
         clearInterval(progressInterval);
@@ -428,6 +484,19 @@ const CheckoutPage = () => {
                   
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod as any}>
                     <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer">
+                      <RadioGroupItem value="yoomoney" id="yoomoney" />
+                      <Label htmlFor="yoomoney" className="flex items-center cursor-pointer">
+                        <CreditCard className="h-4 w-4 mr-2 text-furniture-secondary" />
+                        <div>
+                          <div>{language === 'ru' ? 'Онлайн-оплата (YooMoney)' : 'Онлайн төлем (YooMoney)'}</div>
+                          <p className="text-sm text-gray-500">
+                            {language === 'ru' ? 'Безопасная оплата банковской картой через YooMoney' : 'YooMoney арқылы банк картасымен қауіпсіз төлем'}
+                          </p>
+                        </div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer">
                       <RadioGroupItem value="bank_transfer" id="bank_transfer" />
                       <Label htmlFor="bank_transfer" className="flex items-center cursor-pointer">
                         <CreditCard className="h-4 w-4 mr-2 text-furniture-secondary" />
@@ -452,10 +521,15 @@ const CheckoutPage = () => {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        {language === 'ru' ? 'Оформление...' : 'Рәсімделуде...'}
+                        {paymentMethod === 'yoomoney' 
+                          ? (language === 'ru' ? 'Перенаправление на оплату...' : 'Төлемге бағыттау...')
+                          : (language === 'ru' ? 'Оформление...' : 'Рәсімделуде...')
+                        }
                       </>
                     ) : (
-                      language === 'ru' ? 'Оформить заказ' : 'Тапсырысты рәсімдеу'
+                      paymentMethod === 'yoomoney'
+                        ? (language === 'ru' ? 'Перейти к оплате' : 'Төлемге өту')
+                        : (language === 'ru' ? 'Оформить заказ' : 'Тапсырысты рәсімдеу')
                     )}
                   </Button>
                 </div>
@@ -524,224 +598,227 @@ const CheckoutPage = () => {
         </div>
       </div>
 
-      <TooltipProvider>
-        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-          <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle>
-                {loadingOrder
-                  ? language === 'ru' ? 'Обработка заказа' : 'Тапсырысты өңдеу'
-                  : language === 'ru' ? 'Информация об оплате' : 'Төлем туралы ақпарат'
-                }
-              </DialogTitle>
-              <DialogDescription>
-                {loadingOrder
-                  ? language === 'ru' 
-                    ? 'Пожалуйста, подождите, пока мы обрабатываем ваш заказ...' 
-                    : 'Тапсырысыңызды өңдеу барысында күте тұрыңыз...'
-                  : language === 'ru'
-                    ? 'Используйте следующие реквизиты для оплаты заказа'
-                    : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
-                }
-              </DialogDescription>
-            </DialogHeader>
-            
-            {loadingOrder ? (
-              <div className="space-y-6 py-4">
-                <div className="space-y-2">
-                  <Progress value={progressValue} className="h-2" />
-                  <p className="text-sm text-center text-gray-500">{Math.round(progressValue)}%</p>
+      {/* Показывать диалог только для банковского перевода */}
+      {paymentMethod === 'bank_transfer' && (
+        <TooltipProvider>
+          <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+            <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+              <DialogHeader>
+                <DialogTitle>
+                  {loadingOrder
+                    ? language === 'ru' ? 'Обработка заказа' : 'Тапсырысты өңдеу'
+                    : language === 'ru' ? 'Информация об оплате' : 'Төлем туралы ақпарат'
+                  }
+                </DialogTitle>
+                <DialogDescription>
+                  {loadingOrder
+                    ? language === 'ru' 
+                      ? 'Пожалуйста, подождите, пока мы обрабатываем ваш заказ...' 
+                      : 'Тапсырысыңызды өңдеу барысында күте тұрыңыз...'
+                    : language === 'ru'
+                      ? 'Используйте следующие реквизиты для оплаты заказа'
+                      : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
+                  }
+                </DialogDescription>
+              </DialogHeader>
+              
+              {loadingOrder ? (
+                <div className="space-y-6 py-4">
+                  <div className="space-y-2">
+                    <Progress value={progressValue} className="h-2" />
+                    <p className="text-sm text-center text-gray-500">{Math.round(progressValue)}%</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
+                  </div>
                 </div>
-                <div className="flex justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 py-4">
-                {paymentDetails && (
-                  <>
-                    <div className="grid grid-cols-3 gap-1 text-sm">
-                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Получатель' : 'Алушы'}</div>
-                      <div className="col-span-2 flex items-center">
-                        <div className="font-medium mr-2">{paymentDetails.recipient}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 rounded-full hover:bg-gray-200"
-                              onClick={() => copyToClipboard(paymentDetails.recipient)}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                          </TooltipContent>
-                        </Tooltip>
+              ) : (
+                <div className="space-y-4 py-4">
+                  {paymentDetails && (
+                    <>
+                      <div className="grid grid-cols-3 gap-1 text-sm">
+                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Получатель' : 'Алушы'}</div>
+                        <div className="col-span-2 flex items-center">
+                          <div className="font-medium mr-2">{paymentDetails.recipient}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 rounded-full hover:bg-gray-200"
+                                onClick={() => copyToClipboard(paymentDetails.recipient)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        
+                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Номер счета' : 'Шот нөмірі'}</div>
+                        <div className="col-span-2 flex items-center">
+                          <div className="font-medium mr-2">{paymentDetails.bankAccount}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 rounded-full hover:bg-gray-200"
+                                onClick={() => copyToClipboard(paymentDetails.bankAccount)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        
+                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Банк' : 'Банк'}</div>
+                        <div className="col-span-2 flex items-center">
+                          <div className="font-medium mr-2">{paymentDetails.bankName}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 rounded-full hover:bg-gray-200"
+                                onClick={() => copyToClipboard(paymentDetails.bankName)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        
+                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Сумма' : 'Сома'}</div>
+                        <div className="col-span-2 flex items-center">
+                          <div className="font-medium mr-2">{formatPrice(paymentDetails.amount)}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 rounded-full hover:bg-gray-200"
+                                onClick={() => copyToClipboard(formatPrice(paymentDetails.amount).toString())}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        
+                        {/* Payment Purpose field */}
+                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Мақсаты'}</div>
+                        <div className="col-span-2 flex items-center">
+                          <div className="font-medium mr-2">{paymentPurpose}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 rounded-full hover:bg-gray-200"
+                                onClick={() => copyToClipboard(paymentPurpose)}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                       </div>
                       
-                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Номер счета' : 'Шот нөмірі'}</div>
-                      <div className="col-span-2 flex items-center">
-                        <div className="font-medium mr-2">{paymentDetails.bankAccount}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 rounded-full hover:bg-gray-200"
-                              onClick={() => copyToClipboard(paymentDetails.bankAccount)}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      
-                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Банк' : 'Банк'}</div>
-                      <div className="col-span-2 flex items-center">
-                        <div className="font-medium mr-2">{paymentDetails.bankName}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 rounded-full hover:bg-gray-200"
-                              onClick={() => copyToClipboard(paymentDetails.bankName)}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      
-                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Сумма' : 'Сома'}</div>
-                      <div className="col-span-2 flex items-center">
-                        <div className="font-medium mr-2">{formatPrice(paymentDetails.amount)}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 rounded-full hover:bg-gray-200"
-                              onClick={() => copyToClipboard(formatPrice(paymentDetails.amount).toString())}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      
-                      {/* Payment Purpose field */}
-                      <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Мақсаты'}</div>
-                      <div className="col-span-2 flex items-center">
-                        <div className="font-medium mr-2">{paymentPurpose}</div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6 rounded-full hover:bg-gray-200"
-                              onClick={() => copyToClipboard(paymentPurpose)}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-4 mt-4 border-t">
-                      <p className="text-sm text-gray-500 mb-4">
-                        {language === 'ru' 
-                          ? 'После совершения платежа, пожалуйста, прикрепите чек об оплате.' 
-                          : 'Төлем жасағаннан кейін, төлем түбіртегін бекітіңіз.'}
-                      </p>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <input
-                            type="file"
-                            id="receipt"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            className="hidden"
-                            accept="image/*,.pdf"
-                          />
-                          <div className="flex flex-wrap gap-3">
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={uploadingReceipt}
-                              className="flex-1"
-                            >
-                              <Upload className="h-4 w-4 mr-2" />
-                              {language === 'ru' ? 'Прикрепить чек' : 'Түбіртекті тіркеу'}
-                            </Button>
-                            
-                            {receiptFile && (
+                      <div className="pt-4 mt-4 border-t">
+                        <p className="text-sm text-gray-500 mb-4">
+                          {language === 'ru' 
+                            ? 'После совершения платежа, пожалуйста, прикрепите чек об оплате.' 
+                            : 'Төлем жасағаннан кейін, төлем түбіртегін бекітіңіз.'}
+                        </p>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <input
+                              type="file"
+                              id="receipt"
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
+                              className="hidden"
+                              accept="image/*,.pdf"
+                            />
+                            <div className="flex flex-wrap gap-3">
                               <Button 
                                 type="button" 
-                                variant="secondary" 
-                                onClick={handleUploadReceipt}
+                                variant="outline" 
+                                onClick={() => fileInputRef.current?.click()}
                                 disabled={uploadingReceipt}
                                 className="flex-1"
                               >
-                                {uploadingReceipt ? (
-                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                ) : (
-                                  <Check className="h-4 w-4 mr-2" />
-                                )}
-                                {language === 'ru' ? 'Загрузить' : 'Жүктеу'}
+                                <Upload className="h-4 w-4 mr-2" />
+                                {language === 'ru' ? 'Прикрепить чек' : 'Түбіртекті тіркеу'}
                               </Button>
+                              
+                              {receiptFile && (
+                                <Button 
+                                  type="button" 
+                                  variant="secondary" 
+                                  onClick={handleUploadReceipt}
+                                  disabled={uploadingReceipt}
+                                  className="flex-1"
+                                >
+                                  {uploadingReceipt ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  ) : (
+                                    <Check className="h-4 w-4 mr-2" />
+                                  )}
+                                  {language === 'ru' ? 'Загрузить' : 'Жүктеу'}
+                                </Button>
+                              )}
+                            </div>
+                            
+                            {receiptFile && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                {language === 'ru' ? 'Выбран файл:' : 'Таңдалған файл:'} {receiptFile.name}
+                              </p>
                             )}
                           </div>
                           
-                          {receiptFile && (
-                            <p className="text-xs text-gray-500 mt-2">
-                              {language === 'ru' ? 'Выбран файл:' : 'Таңдалған файл:'} {receiptFile.name}
-                            </p>
-                          )}
+                          <Button 
+                            className="w-full" 
+                            onClick={handlePaymentComplete}
+                            disabled={paymentComplete}
+                          >
+                            {paymentComplete ? (
+                              <Check className="h-4 w-4 mr-2" />
+                            ) : null}
+                            {language === 'ru' ? 'Я оплатил(а)' : 'Мен төледім'}
+                          </Button>
                         </div>
-                        
-                        <Button 
-                          className="w-full" 
-                          onClick={handlePaymentComplete}
-                          disabled={paymentComplete}
-                        >
-                          {paymentComplete ? (
-                            <Check className="h-4 w-4 mr-2" />
-                          ) : null}
-                          {language === 'ru' ? 'Я оплатил(а)' : 'Мен төледім'}
+                      </div>
+                      
+                      <div className="flex justify-end mt-4 pt-4 border-t">
+                        <Button variant="outline" onClick={handleCloseDialog}>
+                          {language === 'ru' ? 'Закрыть' : 'Жабу'}
                         </Button>
                       </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-4 pt-4 border-t">
-                      <Button variant="outline" onClick={handleCloseDialog}>
-                        {language === 'ru' ? 'Закрыть' : 'Жабу'}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </TooltipProvider>
+                    </>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </TooltipProvider>
+      )}
       
       <input
         type="file"
