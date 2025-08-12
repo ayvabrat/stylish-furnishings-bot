@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -166,7 +165,15 @@ const Cart = () => {
                     
                     <Button 
                       onClick={() => navigate('/checkout')}
-                      className="w-full bg-furniture-primary text-white hover:bg-furniture-dark"
+                      className="w-full bg-furniture-primary text-white hover:bg-furniture-dark mb-4"
+                    >
+                      {language === 'ru' ? 'Оплатить' : 'Төлеу'}
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => navigate('/checkout')}
+                      variant="outline"
+                      className="w-full border-furniture-primary text-furniture-primary hover:bg-furniture-light"
                     >
                       {t('cart.checkout')}
                     </Button>
