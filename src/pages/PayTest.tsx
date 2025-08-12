@@ -47,9 +47,7 @@ const PayTestPage: React.FC = () => {
         return;
       }
 
-      const items: CartItemType[] = [
-        { ...testProduct, quantity: 1 },
-      ];
+      const items: CartItemType[] = [{ ...testProduct, quantity: 1 }];
       const totalAmount = 1;
 
       // 2) Создать заказ в Supabase
@@ -66,8 +64,8 @@ const PayTestPage: React.FC = () => {
 
       console.log("Order created:", orderId, reference);
 
-      // 3) Вызвать edge-функцию для создания платежа
-      const { data, error } = await supabase.functions.invoke("yoomoney-create-payment", {
+      // 3) Вызвать edge-функцию для генерации Quickpay ссылки
+      const { data, error } = await supabase.functions.invoke("yoomoney-quickpay", {
         body: { orderId, amount: totalAmount, description: `Оплата заказа ${reference || orderId}` },
       });
 
@@ -80,6 +78,7 @@ const PayTestPage: React.FC = () => {
 
       const confirmationUrl = data?.confirmation_url;
       if (!confirmationUrl) {
+        console.error("No confirmation URL:", data);
         toast.error(language === "ru" ? "Не получили ссылку на оплату" : "Төлем сілтемесі алынбады");
         setLoading(false);
         return;

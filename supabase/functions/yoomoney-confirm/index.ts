@@ -10,13 +10,15 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://cfsqxwxstvcfwefhqvjt.supabase.co";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmc3F4d3hzdHZjZndlZmhxdmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2NTY2ODYsImV4cCI6MjA3MDIzMjY4Nn0.V-obmReB3ANDg6uxIVbsrFTYVAaSCoBMD--CvbBJ6e4";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const YOOMONEY_TOKEN = Deno.env.get("YOOMONEY_TOKEN") || "";
 const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
-const TELEGRAM_ADMIN_IDS = (Deno.env.get("TELEGRAM_ADMIN_IDS") || "").split(",").map(s => s.trim()).filter(Boolean);
+const TELEGRAM_ADMIN_IDS = (Deno.env.get("TELEGRAM_ADMIN_IDS") || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 serve(async (req) => {
   // CORS preflight
@@ -32,13 +34,18 @@ serve(async (req) => {
   }
 
   try {
+    if (!SERVICE_ROLE_KEY) {
+      return new Response(JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!YOOMONEY_TOKEN) {
       return new Response(JSON.stringify({ error: "YOOMONEY_TOKEN is not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     if (!TELEGRAM_BOT_TOKEN || TELEGRAM_ADMIN_IDS.length === 0) {
       return new Response(JSON.stringify({ error: "TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_IDS not configured" }), {
         status: 500,
@@ -46,7 +53,7 @@ serve(async (req) => {
       });
     }
 
-    const { orderId, paymentId: inputPaymentId } = await req.json();
+    const { orderId } = await req.json();
     if (!orderId) {
       return new Response(JSON.stringify({ error: "orderId is required" }), {
         status: 400,
@@ -54,12 +61,12 @@ serve(async (req) => {
       });
     }
 
-    // Load order to get payment id if not provided
-    const { data: order, error: orderErr } = await supabase
+    // Load order to get amount and label
+    const { data: order, error: orderErr } = await supabaseAdmin
       .from("orders")
       .select("*")
       .eq("id", orderId)
-      .single();
+      .maybeSingle();
 
     if (orderErr || !order) {
       console.error("Order not found:", orderErr);
@@ -69,37 +76,48 @@ serve(async (req) => {
       });
     }
 
-    const paymentId = inputPaymentId || order.yoomoney_payment_id;
-    if (!paymentId) {
-      return new Response(JSON.stringify({ error: "paymentId missing on order" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const paymentLabel = order.yoomoney_payment_id || orderId;
+    const expectedAmount = Number(order.total_amount);
 
-    // Check payment status on YooMoney
-    const statusResp = await fetch(`https://api.yoomoney.ru/payments/v2/payment-orders/${encodeURIComponent(paymentId)}`, {
-      method: "GET",
+    // Check payment via YooMoney Wallet API: operation-history by label
+    const body = new URLSearchParams({
+      label: String(paymentLabel),
+      records: "30",
+    });
+
+    const statusResp = await fetch("https://yoomoney.ru/api/operation-history", {
+      method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${YOOMONEY_TOKEN}`,
+        "Authorization": `Bearer ${YOOMONEY_TOKEN}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
       },
+      body,
     });
 
     const statusData = await statusResp.json();
     if (!statusResp.ok) {
-      console.error("YooMoney check status error:", statusData);
+      console.error("YooMoney operation-history error:", statusData);
       return new Response(JSON.stringify({ error: statusData }), {
         status: statusResp.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const paymentStatus: string = statusData?.status || "unknown";
+    const operations: any[] = statusData?.operations || [];
+    // Try to find a successful incoming operation with the given label and amount
+    const matched = operations.find((op: any) => {
+      const okLabel = op?.label === paymentLabel;
+      const okStatus = op?.status === "success" || op?.status === "done";
+      const okDirection = !op?.direction || op?.direction === "in";
+      const okAmount = Number(op?.amount) >= expectedAmount;
+      return okLabel && okStatus && okDirection && okAmount;
+    });
 
-    // If succeeded, mark order paid and notify Telegram
-    if (paymentStatus === "succeeded" || paymentStatus === "success") {
-      const { error: updErr } = await supabase
+    const paymentStatus = matched ? "succeeded" : "pending";
+
+    if (paymentStatus === "succeeded") {
+      const { error: updErr } = await supabaseAdmin
         .from("orders")
         .update({ status: "paid", payment_status: "succeeded" })
         .eq("id", orderId);
@@ -108,8 +126,8 @@ serve(async (req) => {
         console.error("Failed to update order status:", updErr);
       }
 
-      // Fetch order items
-      const { data: items, error: itemsErr } = await supabase
+      // Fetch order items for the message
+      const { data: items, error: itemsErr } = await supabaseAdmin
         .from("order_items")
         .select("*")
         .eq("order_id", orderId);
@@ -120,12 +138,12 @@ serve(async (req) => {
 
       // Prepare Telegram message
       const lines: string[] = [];
-      lines.push(`<b>Новая оплата (YooMoney)</b>`);
-      lines.push(`Статус: <b>успешно</b>`);
+      lines.push("<b>Новая оплата (YooMoney)</b>");
+      lines.push("Статус: <b>успешно</b>");
       lines.push(`Номер заказа: <code>${order.reference || orderId}</code>`);
       lines.push(`Сумма: <b>${order.total_amount}₽</b>`);
       lines.push("");
-      lines.push(`<b>Клиент</b>`);
+      lines.push("<b>Клиент</b>");
       lines.push(`Имя: ${order.customer_name || "-"}`);
       lines.push(`Телефон: ${order.customer_phone || "-"}`);
       if (order.customer_email) lines.push(`Email: ${order.customer_email}`);
@@ -134,7 +152,7 @@ serve(async (req) => {
       if (order.postal_code) lines.push(`Индекс: ${order.postal_code}`);
       if (order.additional_notes) lines.push(`Комментарий: ${order.additional_notes}`);
       lines.push("");
-      lines.push(`<b>Товары</b>`);
+      lines.push("<b>Товары</b>");
       (items || []).forEach((it: any, idx: number) => {
         lines.push(`${idx + 1}. ${it.product_name} × ${it.quantity} — ${it.price}₽`);
       });
