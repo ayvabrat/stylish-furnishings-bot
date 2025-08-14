@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Minus, Plus, Trash2, CreditCard, Banknote } from 'lucide-react';
+import { Minus, Plus, Trash2, CreditCard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,7 +35,7 @@ const Checkout = () => {
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('yoomoney');
+  const [paymentMethod, setPaymentMethod] = useState('arsenalpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
 
@@ -103,7 +103,7 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
-      const { orderId, reference, paymentDetails } = await createOrder({
+      const { orderId, reference } = await createOrder({
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim() || undefined,
@@ -120,26 +120,27 @@ const Checkout = () => {
 
       console.log('Order created:', { orderId, reference });
 
-      if (paymentMethod === 'yoomoney') {
-        // Use YooMoney Quickpay
-        const { data, error } = await supabase.functions.invoke('yoomoney-quickpay', {
+      if (paymentMethod === 'arsenalpay') {
+        // Use ArsenalPay
+        const { data, error } = await supabase.functions.invoke('arsenalpay-create', {
           body: { 
             orderId, 
             amount: finalPrice, 
-            description: `Оплата заказа ${reference || orderId}` 
+            description: `Оплата заказа ${reference || orderId}`,
+            customerEmail: customerEmail.trim() || 'guest@example.com'
           },
         });
 
         if (error) {
-          console.error('YooMoney quickpay error:', error);
+          console.error('ArsenalPay error:', error);
           toast.error(language === 'ru' ? 'Ошибка создания платежа' : 'Төлем жасауда қате');
           setIsSubmitting(false);
           return;
         }
 
-        const confirmationUrl = data?.confirmation_url;
-        if (!confirmationUrl) {
-          console.error('No confirmation URL received:', data);
+        const paymentUrl = data?.payment_url;
+        if (!paymentUrl) {
+          console.error('No payment URL received:', data);
           toast.error(language === 'ru' ? 'Не получили ссылку на оплату' : 'Төлем сілтемесі алынбады');
           setIsSubmitting(false);
           return;
@@ -147,7 +148,7 @@ const Checkout = () => {
 
         // Clear cart and redirect to payment
         clearCart();
-        window.location.href = confirmationUrl;
+        window.location.href = paymentUrl;
       } else {
         // Bank transfer - clear cart and show success page
         clearCart();
@@ -155,7 +156,6 @@ const Checkout = () => {
           state: { 
             orderId, 
             reference, 
-            paymentDetails,
             paymentMethod 
           } 
         });
@@ -194,7 +194,7 @@ const Checkout = () => {
                     <div key={item.id} className="flex items-center justify-between border-b pb-4">
                       <div className="flex-1">
                         <h3 className="font-medium">
-                          {language === 'ru' ? item.name : item.name_kk || item.name}
+                          {language === 'ru' ? item.name : item.nameKz || item.name}
                         </h3>
                         <p className="text-furniture-secondary text-sm">
                           {item.price} ₽ × {item.quantity}
@@ -367,21 +367,42 @@ const Checkout = () => {
                   
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                     <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                      <RadioGroupItem value="yoomoney" id="yoomoney" />
-                      <Label htmlFor="yoomoney" className="flex items-center gap-2">
+                      <RadioGroupItem value="arsenalpay" id="arsenalpay" />
+                      <Label htmlFor="arsenalpay" className="flex items-center gap-2">
                         <CreditCard size={20} />
-                        {language === 'ru' ? 'Онлайн оплата (YooMoney)' : 'Онлайн төлем (YooMoney)'}
+                        {language === 'ru' ? 'Банковская карта' : 'Банк картасы'}
                       </Label>
                     </div>
                     
                     <div className="flex items-center space-x-2 p-4 border rounded-lg">
                       <RadioGroupItem value="bank_transfer" id="bank-transfer" />
                       <Label htmlFor="bank-transfer" className="flex items-center gap-2">
-                        <Banknote size={20} />
+                        <CreditCard size={20} />
                         {language === 'ru' ? 'Банковский перевод' : 'Банктік аударым'}
                       </Label>
                     </div>
                   </RadioGroup>
+
+                  {/* Payment Security Information */}
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h3 className="font-semibold mb-2">
+                      {language === 'ru' ? 'Безопасность платежей' : 'Төлем қауіпсіздігі'}
+                    </h3>
+                    <div className="text-sm space-y-2">
+                      <p>
+                        {language === 'ru' 
+                          ? 'Все платежи обрабатываются через защищенное соединение с использованием технологии шифрования SSL. Данные вашей карты передаются в зашифрованном виде и не сохраняются на нашем сервере.'
+                          : 'Барлық төлемдер SSL шифрлау технологиясын пайдалана отырып қорғалған байланыс арқылы өңделеді. Сіздің карта деректеріңіз шифрланған түрде беріледі және біздің серверде сақталмайды.'
+                        }
+                      </p>
+                      <p>
+                        {language === 'ru' 
+                          ? 'Мы принимаем к оплате банковские карты международных платежных систем Visa, MasterCard и МИР.'
+                          : 'Біз Visa, MasterCard және МИР халықаралық төлем жүйелерінің банк карталарын қабылдаймыз.'
+                        }
+                      </p>
+                    </div>
+                  </div>
 
                   {paymentMethod === 'bank_transfer' && adminSettings && (
                     <div className="mt-4 p-4 bg-blue-50 rounded-lg">

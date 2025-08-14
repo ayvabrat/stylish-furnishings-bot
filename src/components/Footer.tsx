@@ -77,6 +77,11 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/payment-info" className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium">
+                  {language === 'ru' ? 'Информация об оплате' : 'Төлем туралы ақпарат'}
+                </Link>
+              </li>
+              <li>
                 <Link to="/warranty" className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium">
                   {language === 'ru' ? 'Гарантия качества' : 'Сапа кепілдігі'}
                 </Link>
@@ -84,6 +89,11 @@ const Footer: React.FC = () => {
               <li>
                 <Link to="/privacy-policy" className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium">
                   {language === 'ru' ? 'Политика конфиденциальности' : 'Құпиялылық саясаты'}
+                </Link>
+              </li>
+              <li>
+                <Link to="/offer" className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium">
+                  {language === 'ru' ? 'Публичная оферта' : 'Публикалық ұсыныс'}
                 </Link>
               </li>
             </ul>
@@ -133,8 +143,9 @@ const Footer: React.FC = () => {
           </p>
           <div className="mt-4 md:mt-0 flex items-center gap-4">
             <div className="flex gap-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6 opacity-60 hover:opacity-100 transition-opacity" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6 opacity-60 hover:opacity-100 transition-opacity" />
+              <img src="/lovable-uploads/3be3ab67-ee71-42c6-8be7-dad505f9a50b.png" alt="Visa" className="h-6 opacity-60 hover:opacity-100 transition-opacity" />
+              <img src="/lovable-uploads/d07598d9-8192-41b3-b48e-b2843ed07623.png" alt="Mastercard" className="h-6 opacity-60 hover:opacity-100 transition-opacity" />
+              <img src="/lovable-uploads/160594c8-be4d-4e97-b8a8-82ed881ddef9.png" alt="МИР" className="h-6 opacity-60 hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>

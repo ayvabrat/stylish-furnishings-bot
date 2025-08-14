@@ -58,15 +58,20 @@ const PayTestPage: React.FC = () => {
         deliveryAddress: deliveryAddress || undefined,
         items,
         totalAmount,
-        paymentMethod: "yoomoney",
-        additionalNotes: "Тестовая оплата 1₽ через YooMoney",
+        paymentMethod: "arsenalpay",
+        additionalNotes: "Тестовая оплата 1₽ через ArsenalPay",
       });
 
       console.log("Order created:", orderId, reference);
 
-      // 3) Вызвать edge-функцию для генерации Quickpay ссылки
-      const { data, error } = await supabase.functions.invoke("yoomoney-quickpay", {
-        body: { orderId, amount: totalAmount, description: `Оплата заказа ${reference || orderId}` },
+      // 3) Вызвать edge-функцию для создания платежа ArsenalPay
+      const { data, error } = await supabase.functions.invoke("arsenalpay-create", {
+        body: { 
+          orderId, 
+          amount: totalAmount, 
+          description: `Оплата заказа ${reference || orderId}`,
+          customerEmail: "test@example.com"
+        },
       });
 
       if (error) {
@@ -76,16 +81,16 @@ const PayTestPage: React.FC = () => {
         return;
       }
 
-      const confirmationUrl = data?.confirmation_url;
-      if (!confirmationUrl) {
-        console.error("No confirmation URL:", data);
+      const paymentUrl = data?.payment_url;
+      if (!paymentUrl) {
+        console.error("No payment URL:", data);
         toast.error(language === "ru" ? "Не получили ссылку на оплату" : "Төлем сілтемесі алынбады");
         setLoading(false);
         return;
       }
 
-      // 4) Редирект на YooMoney
-      window.location.href = confirmationUrl;
+      // 4) Редирект на ArsenalPay
+      window.location.href = paymentUrl;
     } catch (e: any) {
       console.error(e);
       toast.error(language === "ru" ? "Сбой при создании платежа" : "Төлем жасау кезінде ақау");
