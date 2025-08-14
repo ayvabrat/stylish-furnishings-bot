@@ -13,22 +13,25 @@ const AdminLogin = () => {
   const { language } = useLanguage();
   const { login } = useAdmin();
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Attempt login
-    const success = login(password);
-    
-    setIsLoading(false);
-    if (success) {
-      toast.success(language === 'ru' ? 'Вход выполнен успешно' : 'Кіру сәтті орындалды');
-      navigate('/admin');
-    } else {
-      toast.error(language === 'ru' ? 'Неверный пароль' : 'Қате құпия сөз');
+    try {
+      const success = await login(email, password);
+      
+      if (success) {
+        toast.success(language === 'ru' ? 'Вход выполнен успешно' : 'Кіру сәтті орындалды');
+        navigate('/admin');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -47,6 +50,20 @@ const AdminLogin = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium">
+                    {language === 'ru' ? 'Email' : 'Email'}
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={language === 'ru' ? 'admin@example.com' : 'admin@example.com'}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium">
                     {language === 'ru' ? 'Пароль' : 'Құпия сөз'}
                   </label>
@@ -56,6 +73,7 @@ const AdminLogin = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={language === 'ru' ? 'Введите пароль' : 'Құпия сөзді енгізіңіз'}
+                    required
                   />
                 </div>
                 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -20,10 +19,13 @@ import { AdminSettings } from '@/types/admin';
 import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
-  const { cartItems, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart();
+  const { items: cartItems, updateQuantity, removeItem, totalPrice, clearCart } = useCart();
   const { language } = useLanguage();
-  const { appliedPromoCode, discountAmount } = usePromotion();
+  const { activePromotion, calculateDiscountedAmount } = usePromotion();
   const navigate = useNavigate();
+
+  // Calculate discount amount
+  const discountAmount = calculateDiscountedAmount(totalPrice);
 
   // Form state
   const [customerName, setCustomerName] = useState('');
@@ -79,7 +81,6 @@ const Checkout = () => {
     );
   }
 
-  const totalPrice = getTotalPrice();
   const finalPrice = totalPrice - discountAmount;
 
   const validateForm = () => {
@@ -112,7 +113,7 @@ const Checkout = () => {
         items: cartItems,
         totalAmount: finalPrice,
         paymentMethod,
-        promotionCode: appliedPromoCode?.code,
+        promotionCode: activePromotion?.code,
         discountAmount,
         additionalNotes: additionalNotes.trim() || undefined,
       });
@@ -220,7 +221,7 @@ const Checkout = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => removeItem(item.id)}
                           className="ml-2 text-red-600 hover:text-red-700"
                         >
                           <Trash2 size={16} />
