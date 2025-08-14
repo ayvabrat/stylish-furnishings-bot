@@ -1,422 +1,306 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { Minus, Plus, Trash2, CreditCard, Banknote } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Loader2, Copy, Upload, Check } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 import Layout from '@/components/Layout';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { usePromotion } from '@/contexts/PromotionContext';
-import { createOrder, uploadReceiptImage } from '@/services/orderService';
-import { fetchAdminSettings } from '@/services/adminService';
-import { formatPrice } from '@/lib/utils';
 import PromoCodeInput from '@/components/PromoCodeInput';
+import { createOrder } from '@/services/orderService';
+import { fetchAdminSettings } from '@/services/adminService';
 import { AdminSettings } from '@/types/admin';
 import { supabase } from '@/integrations/supabase/client';
 
-// Function to generate payment purpose with random characters and promo code digits
-const generatePaymentPurpose = (promoCode: string | undefined) => {
-  // Generate 5 random characters
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let randomChars = '';
-  for (let i = 0; i < 5; i++) {
-    randomChars += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  
-  // Extract digits from promo code if it exists
-  let digits = '';
-  if (promoCode) {
-    digits = promoCode.replace(/\D/g, ''); // Remove non-digits
-  }
-  
-  return `${randomChars}${digits}`;
-};
-
-const CheckoutPage = () => {
+const Checkout = () => {
+  const { cartItems, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart();
   const { language } = useLanguage();
-  const { items, clearCart, calculateSubtotal } = useCart();
-  const { activePromotion, calculateDiscountedAmount } = usePromotion();
+  const { appliedPromoCode, discountAmount } = usePromotion();
   const navigate = useNavigate();
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'yoomoney' | 'bank_transfer'>('yoomoney');
-  const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
-  const [progressValue, setProgressValue] = useState(0);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentDetails, setPaymentDetails] = useState<any>(null);
-  const [paymentPurpose, setPaymentPurpose] = useState('');
-  const [progressInterval, setProgressInterval] = useState<NodeJS.Timeout | null>(null);
-  const [showPaymentInfo, setShowPaymentInfo] = useState(false);
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [uploadingReceipt, setUploadingReceipt] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [paymentComplete, setPaymentComplete] = useState(false);
-  const [loadingOrder, setLoadingOrder] = useState(false);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+
+  // Form state
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
   const [city, setCity] = useState('');
-  const [address, setAddress] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
-  
-  const [errors, setErrors] = useState<{
-    name?: string;
-    phone?: string;
-    city?: string;
-    address?: string;
-  }>({});
-  
-  const subtotal = calculateSubtotal();
-  const discountAmount = activePromotion ? calculateDiscountedAmount(subtotal) : 0;
-  const total = subtotal - discountAmount;
-  
+  const [paymentMethod, setPaymentMethod] = useState('yoomoney');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
+
+  // Load admin settings for bank transfer info
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const settings = await fetchAdminSettings();
         setAdminSettings(settings);
-        setPaymentDetails({
-          recipient: settings.paymentDetails.recipientName,
-          bankAccount: settings.paymentDetails.accountNumber,
-          bankName: settings.paymentDetails.bankName,
-          amount: total
-        });
       } catch (error) {
-        console.error('Failed to load admin settings:', error);
+        console.error('Error loading admin settings:', error);
       }
     };
-    
     loadSettings();
-  }, [total, name]);
-  
-  // Generate payment purpose when promo code changes
+  }, []);
+
+  // Scroll to top on component mount
   useEffect(() => {
-    setPaymentPurpose(generatePaymentPurpose(activePromotion?.code));
-  }, [activePromotion]);
-  
-  useEffect(() => {
-    return () => {
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
-    };
-  }, [progressInterval]);
-  
+    window.scrollTo(0, 0);
+  }, []);
+
+  if (cartItems.length === 0) {
+    return (
+      <Layout>
+        <div className="bg-white py-16 md:py-24">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="text-center">
+              <h1 className="text-2xl md:text-3xl font-bold mb-4">
+                {language === 'ru' ? 'Корзина пуста' : 'Себет бос'}
+              </h1>
+              <p className="text-furniture-secondary mb-8">
+                {language === 'ru' 
+                  ? 'Добавьте товары в корзину, чтобы оформить заказ'
+                  : 'Тапсырыс беру үшін себетке тауарлар қосыңыз'}
+              </p>
+              <Button onClick={() => navigate('/catalog')}>
+                {language === 'ru' ? 'Перейти в каталог' : 'Каталогқа өту'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const totalPrice = getTotalPrice();
+  const finalPrice = totalPrice - discountAmount;
+
   const validateForm = () => {
-    const newErrors: {
-      name?: string;
-      phone?: string;
-      city?: string;
-      address?: string;
-    } = {};
-    let isValid = true;
-    
-    if (!name.trim()) {
-      newErrors.name = language === 'ru' ? 'Введите ваше имя' : 'Атыңызды енгізіңіз';
-      isValid = false;
+    if (!customerName.trim()) {
+      toast.error(language === 'ru' ? 'Введите имя' : 'Атыңызды енгізіңіз');
+      return false;
     }
-    
-    if (!phone.trim()) {
-      newErrors.phone = language === 'ru' ? 'Введите ваш телефон' : 'Телефоныңызды енгізіңіз';
-      isValid = false;
+    if (!customerPhone.trim()) {
+      toast.error(language === 'ru' ? 'Введите телефон' : 'Телефонды енгізіңіз');
+      return false;
     }
-    
-    if (!city.trim()) {
-      newErrors.city = language === 'ru' ? 'Введите ваш город' : 'Қалаңызды енгізіңіз';
-      isValid = false;
-    }
-    
-    if (!address.trim()) {
-      newErrors.address = language === 'ru' ? 'Введите ваш адрес' : 'Мекенжайыңызды енгізіңіз';
-      isValid = false;
-    }
-    
-    setErrors(newErrors);
-    return isValid;
+    return true;
   };
-  
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(language === 'ru' ? 'Скопировано!' : 'Көшірілді!', {
-      duration: 1500
-    });
-  };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
-    
-    if (items.length === 0) {
-      toast.error(language === 'ru' ? 'Ваша корзина пуста' : 'Сіздің себетіңіз бос', {
-        duration: 3000
-      });
-      return;
-    }
+    if (!validateForm()) return;
     
     setIsSubmitting(true);
     
-    if (paymentMethod === 'bank_transfer') {
-      setShowPaymentDialog(true);
-      setProgressValue(0);
-      setShowPaymentInfo(false);
-      setLoadingOrder(true);
-    }
-    
-    const interval = setInterval(() => {
-      setProgressValue(prev => {
-        if (prev >= 80) {
-          return 80;
-        }
-        return prev + 5;
-      });
-    }, 200);
-    
-    setProgressInterval(interval);
-    
     try {
-      const orderData = {
-        customerName: name,
-        customerPhone: phone,
-        customerEmail: email || undefined,
-        city,
-        deliveryAddress: address,
-        postalCode: postalCode || undefined,
-        paymentMethod: paymentMethod,
-        additionalNotes: additionalNotes || undefined,
-        totalAmount: total,
-        promotionCode: activePromotion?.code,
-        discountAmount: discountAmount,
-        items: items
-      };
-      
-      console.log('Submitting order:', orderData);
-      
-      const response = await createOrder(orderData);
-      
-      console.log('Order created with ID:', response.orderId);
-      
+      const { orderId, reference, paymentDetails } = await createOrder({
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        customerEmail: customerEmail.trim() || undefined,
+        deliveryAddress: deliveryAddress.trim() || undefined,
+        city: city.trim() || undefined,
+        postalCode: postalCode.trim() || undefined,
+        items: cartItems,
+        totalAmount: finalPrice,
+        paymentMethod,
+        promotionCode: appliedPromoCode?.code,
+        discountAmount,
+        additionalNotes: additionalNotes.trim() || undefined,
+      });
+
+      console.log('Order created:', { orderId, reference });
+
       if (paymentMethod === 'yoomoney') {
-        // Создать платеж через YooMoney
-        try {
-          console.log('Creating YooMoney payment...');
-          const { data: paymentData, error: paymentError } = await supabase.functions.invoke('yoomoney-create-payment', {
-            body: {
-              orderId: response.orderId,
-              amount: total,
-              description: `Оплата заказа ${response.reference || response.orderId}`
-            }
-          });
-          
-          if (paymentError) {
-            console.error('YooMoney payment error:', paymentError);
-            toast.error(
-              language === 'ru' 
-                ? 'Ошибка при создании платежа. Попробуйте еще раз.' 
-                : 'Төлем жасау кезінде қате. Қайталап көріңіз.',
-              { duration: 5000 }
-            );
-            return;
-          }
-          
-          if (paymentData?.confirmation_url) {
-            console.log('Redirecting to YooMoney:', paymentData.confirmation_url);
-            // Очищаем корзину перед перенаправлением
-            clearCart();
-            // Перенаправляем на YooMoney
-            window.location.href = paymentData.confirmation_url;
-          } else {
-            throw new Error('No confirmation URL received');
-          }
-        } catch (error) {
-          console.error('Failed to create YooMoney payment:', error);
-          toast.error(
-            language === 'ru' 
-              ? 'Не удалось создать платеж. Попробуйте еще раз.' 
-              : 'Төлем жасау мүмкін болмады. Қайталап көріңіз.',
-            { duration: 5000 }
-          );
-        }
-      } else {
-        // Банковский перевод - показываем реквизиты
-        setOrderId(response.orderId);
-        setPaymentDetails({
-          ...response.paymentDetails,
-          purpose: paymentPurpose
+        // Use YooMoney Quickpay
+        const { data, error } = await supabase.functions.invoke('yoomoney-quickpay', {
+          body: { 
+            orderId, 
+            amount: finalPrice, 
+            description: `Оплата заказа ${reference || orderId}` 
+          },
         });
-        setProgressValue(100);
-        setShowPaymentInfo(true);
-        setLoadingOrder(false);
-        
-        if (response.orderId !== 'error' && response.orderId !== 'temporary') {
-          clearCart();
-          
-          toast.success(language === 'ru' ? 'Заказ успешно оформлен!' : 'Тапсырыс сәтті рәсімделді!', {
-            duration: 3000
-          });
+
+        if (error) {
+          console.error('YooMoney quickpay error:', error);
+          toast.error(language === 'ru' ? 'Ошибка создания платежа' : 'Төлем жасауда қате');
+          setIsSubmitting(false);
+          return;
         }
+
+        const confirmationUrl = data?.confirmation_url;
+        if (!confirmationUrl) {
+          console.error('No confirmation URL received:', data);
+          toast.error(language === 'ru' ? 'Не получили ссылку на оплату' : 'Төлем сілтемесі алынбады');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Clear cart and redirect to payment
+        clearCart();
+        window.location.href = confirmationUrl;
+      } else {
+        // Bank transfer - clear cart and show success page
+        clearCart();
+        navigate('/checkout-success', { 
+          state: { 
+            orderId, 
+            reference, 
+            paymentDetails,
+            paymentMethod 
+          } 
+        });
       }
     } catch (error) {
-      console.error('Failed to create order:', error);
-      if (paymentMethod === 'bank_transfer') {
-        setProgressValue(100);
-        setShowPaymentInfo(true);
-        setLoadingOrder(false);
-      }
-      toast.error(
-        language === 'ru' 
-          ? 'Не удалось создать заказ. Попробуйте еще раз.' 
-          : 'Тапсырыс жасау мүмкін болмады. Қайталап көріңіз.',
-        { duration: 5000 }
-      );
+      console.error('Error creating order:', error);
+      toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырыс беруде қате');
     } finally {
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
       setIsSubmitting(false);
     }
   };
 
-  const handleCloseDialog = () => {
-    setShowPaymentDialog(false);
-    if (paymentComplete) {
-      navigate('/');
-    }
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setReceiptFile(e.target.files[0]);
-    }
-  };
-  
-  const handleUploadReceipt = async () => {
-    if (!receiptFile || !orderId) return;
-    
-    setUploadingReceipt(true);
-    try {
-      const result = await uploadReceiptImage(orderId, receiptFile);
-      
-      if (result.success) {
-        toast.success(
-          language === 'ru' 
-            ? 'Чек успешно загружен!' 
-            : 'Түбіртек сәтті жүктелді!',
-          { duration: 3000 }
-        );
-      } else {
-        toast.error(
-          language === 'ru' 
-            ? `Ошибка при загрузке чека: ${result.error}` 
-            : `Түбіртекті жүктеу кезінде қате: ${result.error}`,
-          { duration: 3000 }
-        );
-      }
-    } catch (error) {
-      console.error('Error uploading receipt:', error);
-      toast.error(
-        language === 'ru' 
-          ? 'Не удалось загрузить чек' 
-          : 'Түбіртекті жүктеу мүмкін болмады',
-        { duration: 3000 }
-      );
-    } finally {
-      setUploadingReceipt(false);
-    }
-  };
-  
-  const handlePaymentComplete = () => {
-    setPaymentComplete(true);
-    toast.success(
-      language === 'ru' 
-        ? 'Спасибо за оплату! Мы свяжемся с вами для подтверждения заказа.' 
-        : 'Төлем жасағаныңыз үшін рахмет! Тапсырысты растау үшін сізбен байланысамыз.',
-      { duration: 5000 }
-    );
-    
-    setTimeout(() => {
-      setShowPaymentDialog(false);
-      navigate('/');
-    }, 2000);
-  };
-  
   return (
     <Layout>
       <div className="bg-white py-10 md:py-16">
         <div className="container mx-auto px-4 md:px-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-6">
-            {language === 'ru' ? 'Оформление заказа' : 'Тапсырысты рәсімдеу'}
-          </h1>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <motion.div 
+            className="max-w-4xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+              {language === 'ru' ? 'Оформление заказа' : 'Тапсырысты рәсімдеу'}
+            </h1>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Order Summary */}
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h2 className="text-xl font-semibold mb-4">
+                  {language === 'ru' ? 'Ваш заказ' : 'Сіздің тапсырысыңыз'}
+                </h2>
+                
+                <div className="space-y-4 mb-6">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between border-b pb-4">
+                      <div className="flex-1">
+                        <h3 className="font-medium">
+                          {language === 'ru' ? item.name : item.name_kk || item.name}
+                        </h3>
+                        <p className="text-furniture-secondary text-sm">
+                          {item.price} ₽ × {item.quantity}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                        >
+                          <Minus size={16} />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus size={16} />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeFromCart(item.id)}
+                          className="ml-2 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <PromoCodeInput />
+
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span>{language === 'ru' ? 'Подытог:' : 'Аралық сома:'}</span>
+                    <span>{totalPrice} ₽</span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>{language === 'ru' ? 'Скидка:' : 'Жеңілдік:'}</span>
+                      <span>-{discountAmount} ₽</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                    <span>{language === 'ru' ? 'Итого:' : 'Барлығы:'}</span>
+                    <span>{finalPrice} ₽</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Information Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div>
                   <h2 className="text-xl font-semibold mb-4">
                     {language === 'ru' ? 'Контактная информация' : 'Байланыс ақпараты'}
                   </h2>
                   
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="name">
-                        {language === 'ru' ? 'Имя' : 'Аты'} <span className="text-red-500">*</span>
+                      <Label htmlFor="customerName">
+                        {language === 'ru' ? 'Имя и фамилия *' : 'Аты-жөні *'}
                       </Label>
                       <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className={errors.name ? 'border-red-500' : ''}
+                        id="customerName"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder={language === 'ru' ? 'Иван Иванов' : 'Иван Иванов'}
+                        required
                       />
-                      {errors.name && (
-                        <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                      )}
                     </div>
                     
                     <div>
-                      <Label htmlFor="phone">
-                        {language === 'ru' ? 'Телефон' : 'Телефон'} <span className="text-red-500">*</span>
+                      <Label htmlFor="customerPhone">
+                        {language === 'ru' ? 'Телефон *' : 'Телефон *'}
                       </Label>
                       <Input
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+7 (XXX) XXX-XX-XX"
-                        className={errors.phone ? 'border-red-500' : ''}
+                        id="customerPhone"
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="+7 777 123 45 67"
+                        required
                       />
-                      {errors.phone && (
-                        <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                      )}
                     </div>
                     
                     <div>
-                      <Label htmlFor="email">
-                        {language === 'ru' ? 'Email (необязательно)' : 'Email (міндетті емес)'}
+                      <Label htmlFor="customerEmail">
+                        {language === 'ru' ? 'Email' : 'Email'}
                       </Label>
                       <Input
-                        id="email"
+                        id="customerEmail"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                        placeholder="ivan@example.com"
                       />
                     </div>
                   </div>
                 </div>
-                
-                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+
+                <div>
                   <h2 className="text-xl font-semibold mb-4">
                     {language === 'ru' ? 'Адрес доставки' : 'Жеткізу мекенжайы'}
                   </h2>
@@ -424,412 +308,112 @@ const CheckoutPage = () => {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="city">
-                        {language === 'ru' ? 'Город' : 'Қала'} <span className="text-red-500">*</span>
+                        {language === 'ru' ? 'Город' : 'Қала'}
                       </Label>
                       <Input
                         id="city"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className={errors.city ? 'border-red-500' : ''}
+                        placeholder={language === 'ru' ? 'Алматы' : 'Алматы'}
                       />
-                      {errors.city && (
-                        <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                      )}
                     </div>
                     
                     <div>
-                      <Label htmlFor="address">
-                        {language === 'ru' ? 'Адрес' : 'Мекенжай'} <span className="text-red-500">*</span>
+                      <Label htmlFor="deliveryAddress">
+                        {language === 'ru' ? 'Адрес' : 'Мекенжай'}
                       </Label>
-                      <Textarea
-                        id="address"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        className={errors.address ? 'border-red-500' : ''}
+                      <Input
+                        id="deliveryAddress"
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        placeholder={language === 'ru' ? 'ул. Абая, д. 123, кв. 45' : 'Абай көш., 123 үй, 45 пәт.'}
                       />
-                      {errors.address && (
-                        <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                      )}
                     </div>
                     
                     <div>
                       <Label htmlFor="postalCode">
-                        {language === 'ru' ? 'Почтовый индекс (необязательно)' : 'Пошта индексі (міндетті емес)'}
+                        {language === 'ru' ? 'Почтовый индекс' : 'Пошта индексі'}
                       </Label>
                       <Input
                         id="postalCode"
                         value={postalCode}
                         onChange={(e) => setPostalCode(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="additionalNotes">
-                        {language === 'ru' ? 'Дополнительная информация (необязательно)' : 'Қосымша ақпарат (міндетті емес)'}
-                      </Label>
-                      <Textarea
-                        id="additionalNotes"
-                        value={additionalNotes}
-                        onChange={(e) => setAdditionalNotes(e.target.value)}
-                        placeholder={language === 'ru' ? 'Комментарии к заказу или доставке' : 'Тапсырыс немесе жеткізу туралы пікірлер'}
+                        placeholder="050000"
                       />
                     </div>
                   </div>
                 </div>
-                
-                <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+
+                <div>
+                  <Label htmlFor="additionalNotes">
+                    {language === 'ru' ? 'Дополнительные комментарии' : 'Қосымша ескертпелер'}
+                  </Label>
+                  <Textarea
+                    id="additionalNotes"
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder={language === 'ru' 
+                      ? 'Особые пожелания по доставке или заказу...' 
+                      : 'Жеткізу немесе тапсырыс бойынша ерекше тілектер...'}
+                    rows={3}
+                  />
+                </div>
+
+                <div>
                   <h2 className="text-xl font-semibold mb-4">
                     {language === 'ru' ? 'Способ оплаты' : 'Төлем әдісі'}
                   </h2>
                   
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod as any}>
-                    <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer">
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
                       <RadioGroupItem value="yoomoney" id="yoomoney" />
-                      <Label htmlFor="yoomoney" className="flex items-center cursor-pointer">
-                        <CreditCard className="h-4 w-4 mr-2 text-furniture-secondary" />
-                        <div>
-                          <div>{language === 'ru' ? 'Онлайн-оплата (YooMoney)' : 'Онлайн төлем (YooMoney)'}</div>
-                          <p className="text-sm text-gray-500">
-                            {language === 'ru' ? 'Безопасная оплата банковской картой через YooMoney' : 'YooMoney арқылы банк картасымен қауіпсіз төлем'}
-                          </p>
-                        </div>
+                      <Label htmlFor="yoomoney" className="flex items-center gap-2">
+                        <CreditCard size={20} />
+                        {language === 'ru' ? 'Онлайн оплата (YooMoney)' : 'Онлайн төлем (YooMoney)'}
                       </Label>
                     </div>
                     
-                    <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer">
-                      <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-                      <Label htmlFor="bank_transfer" className="flex items-center cursor-pointer">
-                        <CreditCard className="h-4 w-4 mr-2 text-furniture-secondary" />
-                        <div>
-                          <div>{language === 'ru' ? 'Банковский перевод' : 'Банк аударымы'}</div>
-                          <p className="text-sm text-gray-500">
-                            {language === 'ru' ? 'Реквизиты для оплаты будут отправлены после оформления заказа' : 'Төлем реквизиттері тапсырыс рәсімделгеннен кейін жіберіледі'}
-                          </p>
-                        </div>
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                      <RadioGroupItem value="bank_transfer" id="bank-transfer" />
+                      <Label htmlFor="bank-transfer" className="flex items-center gap-2">
+                        <Banknote size={20} />
+                        {language === 'ru' ? 'Банковский перевод' : 'Банктік аударым'}
                       </Label>
                     </div>
                   </RadioGroup>
+
+                  {paymentMethod === 'bank_transfer' && adminSettings && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <h3 className="font-semibold mb-2">
+                        {language === 'ru' ? 'Реквизиты для перевода:' : 'Аударым деректемелері:'}
+                      </h3>
+                      <div className="text-sm space-y-1">
+                        <p><strong>{language === 'ru' ? 'Банк:' : 'Банк:'}</strong> {adminSettings.paymentDetails.bankName}</p>
+                        <p><strong>{language === 'ru' ? 'Номер карты:' : 'Карта нөмірі:'}</strong> {adminSettings.paymentDetails.accountNumber}</p>
+                        <p><strong>{language === 'ru' ? 'Получатель:' : 'Алушы:'}</strong> {adminSettings.paymentDetails.recipientName}</p>
+                        <p><strong>{language === 'ru' ? 'Сумма:' : 'Сома:'}</strong> {finalPrice} ₽</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              
-                <div className="mt-8">
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    size="lg"
-                    disabled={isSubmitting || items.length === 0}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        {paymentMethod === 'yoomoney' 
-                          ? (language === 'ru' ? 'Перенаправление на оплату...' : 'Төлемге бағыттау...')
-                          : (language === 'ru' ? 'Оформление...' : 'Рәсімделуде...')
-                        }
-                      </>
-                    ) : (
-                      paymentMethod === 'yoomoney'
-                        ? (language === 'ru' ? 'Перейти к оплате' : 'Төлемге өту')
-                        : (language === 'ru' ? 'Оформить заказ' : 'Тапсырысты рәсімдеу')
-                    )}
-                  </Button>
-                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting 
+                    ? (language === 'ru' ? 'Оформление...' : 'Рәсімдеу...') 
+                    : (language === 'ru' ? 'Оформить заказ' : 'Тапсырыс беру')
+                  }
+                </Button>
               </form>
             </div>
-            
-            <div className="lg:col-span-1">
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm sticky top-24">
-                <h2 className="text-xl font-semibold mb-4">
-                  {language === 'ru' ? 'Ваш заказ' : 'Сіздің тапсырысыңыз'}
-                </h2>
-                
-                <div className="space-y-4">
-                  {items.length > 0 ? (
-                    <div className="space-y-3">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex justify-between">
-                          <div>
-                            <span className="font-medium">
-                              {language === 'ru' ? item.name : item.nameKz}
-                            </span>
-                            <span className="text-gray-600"> × {item.quantity}</span>
-                          </div>
-                          <div className="font-medium">
-                            {formatPrice(item.price * item.quantity)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      {language === 'ru' ? 'Корзина пуста' : 'Себет бос'}
-                    </div>
-                  )}
-                  
-                  <div className="border-t pt-4">
-                    <PromoCodeInput />
-                  </div>
-                  
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">
-                        {language === 'ru' ? 'Подытог' : 'Аралық жиынтық'}
-                      </span>
-                      <span>{formatPrice(subtotal)}</span>
-                    </div>
-                    
-                    {activePromotion && (
-                      <div className="flex justify-between text-green-600">
-                        <span>
-                          {language === 'ru' ? 'Скидка' : 'Жеңілдік'} ({activePromotion.discountPercentage}%)
-                        </span>
-                        <span>-{formatPrice(discountAmount)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                      <span>{language === 'ru' ? 'Итого' : 'Барлығы'}</span>
-                      <span>{formatPrice(total)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-
-      {/* Показывать диалог только для банковского перевода */}
-      {paymentMethod === 'bank_transfer' && (
-        <TooltipProvider>
-          <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-            <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-              <DialogHeader>
-                <DialogTitle>
-                  {loadingOrder
-                    ? language === 'ru' ? 'Обработка заказа' : 'Тапсырысты өңдеу'
-                    : language === 'ru' ? 'Информация об оплате' : 'Төлем туралы ақпарат'
-                  }
-                </DialogTitle>
-                <DialogDescription>
-                  {loadingOrder
-                    ? language === 'ru' 
-                      ? 'Пожалуйста, подождите, пока мы обрабатываем ваш заказ...' 
-                      : 'Тапсырысыңызды өңдеу барысында күте тұрыңыз...'
-                    : language === 'ru'
-                      ? 'Используйте следующие реквизиты для оплаты заказа'
-                      : 'Тапсырысқа төлем жасау үшін келесі деректемелерді пайдаланыңыз'
-                  }
-                </DialogDescription>
-              </DialogHeader>
-              
-              {loadingOrder ? (
-                <div className="space-y-6 py-4">
-                  <div className="space-y-2">
-                    <Progress value={progressValue} className="h-2" />
-                    <p className="text-sm text-center text-gray-500">{Math.round(progressValue)}%</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-furniture-primary" />
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4 py-4">
-                  {paymentDetails && (
-                    <>
-                      <div className="grid grid-cols-3 gap-1 text-sm">
-                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Получатель' : 'Алушы'}</div>
-                        <div className="col-span-2 flex items-center">
-                          <div className="font-medium mr-2">{paymentDetails.recipient}</div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 rounded-full hover:bg-gray-200"
-                                onClick={() => copyToClipboard(paymentDetails.recipient)}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        
-                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Номер счета' : 'Шот нөмірі'}</div>
-                        <div className="col-span-2 flex items-center">
-                          <div className="font-medium mr-2">{paymentDetails.bankAccount}</div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 rounded-full hover:bg-gray-200"
-                                onClick={() => copyToClipboard(paymentDetails.bankAccount)}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        
-                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Банк' : 'Банк'}</div>
-                        <div className="col-span-2 flex items-center">
-                          <div className="font-medium mr-2">{paymentDetails.bankName}</div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 rounded-full hover:bg-gray-200"
-                                onClick={() => copyToClipboard(paymentDetails.bankName)}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        
-                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Сумма' : 'Сома'}</div>
-                        <div className="col-span-2 flex items-center">
-                          <div className="font-medium mr-2">{formatPrice(paymentDetails.amount)}</div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 rounded-full hover:bg-gray-200"
-                                onClick={() => copyToClipboard(formatPrice(paymentDetails.amount).toString())}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        
-                        {/* Payment Purpose field */}
-                        <div className="font-medium text-gray-500">{language === 'ru' ? 'Назначение' : 'Мақсаты'}</div>
-                        <div className="col-span-2 flex items-center">
-                          <div className="font-medium mr-2">{paymentPurpose}</div>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 rounded-full hover:bg-gray-200"
-                                onClick={() => copyToClipboard(paymentPurpose)}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {language === 'ru' ? 'Копировать' : 'Көшіру'}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </div>
-                      
-                      <div className="pt-4 mt-4 border-t">
-                        <p className="text-sm text-gray-500 mb-4">
-                          {language === 'ru' 
-                            ? 'После совершения платежа, пожалуйста, прикрепите чек об оплате.' 
-                            : 'Төлем жасағаннан кейін, төлем түбіртегін бекітіңіз.'}
-                        </p>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <input
-                              type="file"
-                              id="receipt"
-                              ref={fileInputRef}
-                              onChange={handleFileChange}
-                              className="hidden"
-                              accept="image/*,.pdf"
-                            />
-                            <div className="flex flex-wrap gap-3">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploadingReceipt}
-                                className="flex-1"
-                              >
-                                <Upload className="h-4 w-4 mr-2" />
-                                {language === 'ru' ? 'Прикрепить чек' : 'Түбіртекті тіркеу'}
-                              </Button>
-                              
-                              {receiptFile && (
-                                <Button 
-                                  type="button" 
-                                  variant="secondary" 
-                                  onClick={handleUploadReceipt}
-                                  disabled={uploadingReceipt}
-                                  className="flex-1"
-                                >
-                                  {uploadingReceipt ? (
-                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                  ) : (
-                                    <Check className="h-4 w-4 mr-2" />
-                                  )}
-                                  {language === 'ru' ? 'Загрузить' : 'Жүктеу'}
-                                </Button>
-                              )}
-                            </div>
-                            
-                            {receiptFile && (
-                              <p className="text-xs text-gray-500 mt-2">
-                                {language === 'ru' ? 'Выбран файл:' : 'Таңдалған файл:'} {receiptFile.name}
-                              </p>
-                            )}
-                          </div>
-                          
-                          <Button 
-                            className="w-full" 
-                            onClick={handlePaymentComplete}
-                            disabled={paymentComplete}
-                          >
-                            {paymentComplete ? (
-                              <Check className="h-4 w-4 mr-2" />
-                            ) : null}
-                            {language === 'ru' ? 'Я оплатил(а)' : 'Мен төледім'}
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end mt-4 pt-4 border-t">
-                        <Button variant="outline" onClick={handleCloseDialog}>
-                          {language === 'ru' ? 'Закрыть' : 'Жабу'}
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        </TooltipProvider>
-      )}
-      
-      <input
-        type="file"
-        id="receipt"
-        className="hidden"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*,.pdf"
-      />
     </Layout>
   );
 };
 
-export default CheckoutPage;
+export default Checkout;
