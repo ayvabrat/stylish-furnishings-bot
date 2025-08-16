@@ -338,7 +338,7 @@ const Checkout = () => {
                   
                   <div className="flex items-center space-x-2 p-4 border rounded-lg bg-blue-50">
                     <CreditCard size={20} className="text-blue-600" />
-                    <span className="font-medium">ArsenalPay</span>
+                    <span className="font-medium">Arsenal Pay</span>
                   </div>
 
                   {/* Payment Security Information */}
@@ -370,7 +370,7 @@ const Checkout = () => {
                 >
                   {isSubmitting 
                     ? (language === 'ru' ? 'Оформление...' : 'Рәсімдеу...') 
-                    : (language === 'ru' ? 'Оплатить через ArsenalPay' : 'ArsenalPay арқылы төлеу')
+                    : (language === 'ru' ? 'Оплатить через Arsenal Pay' : 'Arsenal Pay арқылы төлеу')
                   }
                 </Button>
               </form>
