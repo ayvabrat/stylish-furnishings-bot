@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -5,7 +6,6 @@ import { Minus, Plus, Trash2, CreditCard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -14,8 +14,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { usePromotion } from '@/contexts/PromotionContext';
 import PromoCodeInput from '@/components/PromoCodeInput';
 import { createOrder } from '@/services/orderService';
-import { fetchAdminSettings } from '@/services/adminService';
-import { AdminSettings } from '@/types/admin';
 import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
@@ -35,22 +33,7 @@ const Checkout = () => {
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('arsenalpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
-
-  // Load admin settings for bank transfer info
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settings = await fetchAdminSettings();
-        setAdminSettings(settings);
-      } catch (error) {
-        console.error('Error loading admin settings:', error);
-      }
-    };
-    loadSettings();
-  }, []);
 
   // Scroll to top on component mount
   useEffect(() => {
@@ -112,7 +95,7 @@ const Checkout = () => {
         postalCode: postalCode.trim() || undefined,
         items: cartItems,
         totalAmount: finalPrice,
-        paymentMethod,
+        paymentMethod: 'arsenalpay',
         promotionCode: activePromotion?.code,
         discountAmount,
         additionalNotes: additionalNotes.trim() || undefined,
@@ -120,46 +103,34 @@ const Checkout = () => {
 
       console.log('Order created:', { orderId, reference });
 
-      if (paymentMethod === 'arsenalpay') {
-        // Use ArsenalPay
-        const { data, error } = await supabase.functions.invoke('arsenalpay-create', {
-          body: { 
-            orderId, 
-            amount: finalPrice, 
-            description: `Оплата заказа ${reference || orderId}`,
-            customerEmail: customerEmail.trim() || 'guest@example.com'
-          },
-        });
+      // Use ArsenalPay
+      const { data, error } = await supabase.functions.invoke('arsenalpay-create', {
+        body: { 
+          orderId, 
+          amount: finalPrice, 
+          description: `Оплата заказа ${reference || orderId}`,
+          customerEmail: customerEmail.trim() || 'guest@example.com'
+        },
+      });
 
-        if (error) {
-          console.error('ArsenalPay error:', error);
-          toast.error(language === 'ru' ? 'Ошибка создания платежа' : 'Төлем жасауда қате');
-          setIsSubmitting(false);
-          return;
-        }
-
-        const paymentUrl = data?.payment_url;
-        if (!paymentUrl) {
-          console.error('No payment URL received:', data);
-          toast.error(language === 'ru' ? 'Не получили ссылку на оплату' : 'Төлем сілтемесі алынбады');
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Clear cart and redirect to payment
-        clearCart();
-        window.location.href = paymentUrl;
-      } else {
-        // Bank transfer - clear cart and show success page
-        clearCart();
-        navigate('/checkout-success', { 
-          state: { 
-            orderId, 
-            reference, 
-            paymentMethod 
-          } 
-        });
+      if (error) {
+        console.error('ArsenalPay error:', error);
+        toast.error(language === 'ru' ? 'Ошибка создания платежа' : 'Төлем жасауда қате');
+        setIsSubmitting(false);
+        return;
       }
+
+      const paymentUrl = data?.payment_url;
+      if (!paymentUrl) {
+        console.error('No payment URL received:', data);
+        toast.error(language === 'ru' ? 'Не получили ссылку на оплату' : 'Төлем сілтемесі алынбады');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Clear cart and redirect to payment
+      clearCart();
+      window.location.href = paymentUrl;
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырыс беруде қате');
@@ -365,23 +336,10 @@ const Checkout = () => {
                     {language === 'ru' ? 'Способ оплаты' : 'Төлем әдісі'}
                   </h2>
                   
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                      <RadioGroupItem value="arsenalpay" id="arsenalpay" />
-                      <Label htmlFor="arsenalpay" className="flex items-center gap-2">
-                        <CreditCard size={20} />
-                        {language === 'ru' ? 'Банковская карта' : 'Банк картасы'}
-                      </Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                      <RadioGroupItem value="bank_transfer" id="bank-transfer" />
-                      <Label htmlFor="bank-transfer" className="flex items-center gap-2">
-                        <CreditCard size={20} />
-                        {language === 'ru' ? 'Банковский перевод' : 'Банктік аударым'}
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg bg-blue-50">
+                    <CreditCard size={20} className="text-blue-600" />
+                    <span className="font-medium">ArsenalPay</span>
+                  </div>
 
                   {/* Payment Security Information */}
                   <div className="mt-4 p-4 bg-blue-50 rounded-lg">
@@ -403,20 +361,6 @@ const Checkout = () => {
                       </p>
                     </div>
                   </div>
-
-                  {paymentMethod === 'bank_transfer' && adminSettings && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <h3 className="font-semibold mb-2">
-                        {language === 'ru' ? 'Реквизиты для перевода:' : 'Аударым деректемелері:'}
-                      </h3>
-                      <div className="text-sm space-y-1">
-                        <p><strong>{language === 'ru' ? 'Банк:' : 'Банк:'}</strong> {adminSettings.paymentDetails.bankName}</p>
-                        <p><strong>{language === 'ru' ? 'Номер карты:' : 'Карта нөмірі:'}</strong> {adminSettings.paymentDetails.accountNumber}</p>
-                        <p><strong>{language === 'ru' ? 'Получатель:' : 'Алушы:'}</strong> {adminSettings.paymentDetails.recipientName}</p>
-                        <p><strong>{language === 'ru' ? 'Сумма:' : 'Сома:'}</strong> {finalPrice} ₽</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <Button 
@@ -426,7 +370,7 @@ const Checkout = () => {
                 >
                   {isSubmitting 
                     ? (language === 'ru' ? 'Оформление...' : 'Рәсімдеу...') 
-                    : (language === 'ru' ? 'Оформить заказ' : 'Тапсырыс беру')
+                    : (language === 'ru' ? 'Оплатить через ArsenalPay' : 'ArsenalPay арқылы төлеу')
                   }
                 </Button>
               </form>

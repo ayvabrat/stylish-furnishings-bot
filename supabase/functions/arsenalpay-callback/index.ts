@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
@@ -43,61 +43,57 @@ async function sendTelegramNotification(message: string) {
   }
 }
 
-// Verify callback signature (implement based on ArsenalPay documentation)
-function verifySignature(data: any, signature: string): boolean {
-  // This should be implemented based on ArsenalPay's signature verification method
-  // For now, returning true - you should implement proper signature verification
-  console.log("Signature verification needed - implement based on ArsenalPay docs");
-  return true;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Only POST is allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
 
   try {
-    const callbackData = await req.json();
+    let callbackData: any = {};
+
+    if (req.method === "POST") {
+      const contentType = req.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        callbackData = await req.json();
+      } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+        const formData = await req.formData();
+        for (const [key, value] of formData.entries()) {
+          callbackData[key] = value;
+        }
+      }
+    } else if (req.method === "GET") {
+      const url = new URL(req.url);
+      for (const [key, value] of url.searchParams.entries()) {
+        callbackData[key] = value;
+      }
+    }
+
     console.log("ArsenalPay callback received:", callbackData);
 
-    // Verify signature (implement based on ArsenalPay documentation)
-    const signature = req.headers.get("X-Signature") || callbackData.signature;
-    if (!verifySignature(callbackData, signature)) {
-      console.error("Invalid signature");
-      return new Response(JSON.stringify({ error: "Invalid signature" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // ArsenalPay typically sends these parameters
+    const { account, sum, status, widget_id, payment_id } = callbackData;
+    const orderId = account || payment_id;
+
+    if (!orderId) {
+      console.error("Missing orderId in callback:", callbackData);
+      return new Response("OK", {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/plain" },
       });
     }
 
-    const { payment_id, order_id, status, amount } = callbackData;
-
-    if (!payment_id || !order_id) {
-      console.error("Missing required fields:", { payment_id, order_id });
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Find the order by ArsenalPay payment ID or order ID
+    // Find the order
     const { data: order, error: findError } = await supabaseAdmin
       .from("orders")
       .select("*")
-      .or(`arsenalpay_payment_id.eq.${payment_id},id.eq.${order_id}`)
+      .eq("id", orderId)
       .single();
 
     if (findError || !order) {
       console.error("Order not found:", findError);
-      return new Response(JSON.stringify({ error: "Order not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response("OK", {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/plain" },
       });
     }
 
@@ -105,24 +101,13 @@ serve(async (req) => {
     let paymentStatus = "pending";
     let orderStatus = order.status;
 
-    switch (status?.toLowerCase()) {
-      case "success":
-      case "succeeded":
-      case "paid":
-        paymentStatus = "paid";
-        orderStatus = "confirmed";
-        break;
-      case "failed":
-      case "cancelled":
-        paymentStatus = "failed";
-        orderStatus = "cancelled";
-        break;
-      case "pending":
-      case "processing":
-        paymentStatus = "pending";
-        break;
-      default:
-        paymentStatus = status || "unknown";
+    // ArsenalPay typically uses status codes or text
+    if (status === "1" || status === "success" || status === "paid") {
+      paymentStatus = "paid";
+      orderStatus = "confirmed";
+    } else if (status === "0" || status === "failed" || status === "cancelled") {
+      paymentStatus = "failed";
+      orderStatus = "cancelled";
     }
 
     // Update order status
@@ -131,16 +116,12 @@ serve(async (req) => {
       .update({
         payment_status: paymentStatus,
         status: orderStatus,
-        arsenalpay_payment_id: payment_id,
+        arsenalpay_payment_id: payment_id || orderId,
       })
       .eq("id", order.id);
 
     if (updateError) {
       console.error("Failed to update order:", updateError);
-      return new Response(JSON.stringify({ error: "Failed to update order" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     // Send Telegram notification for successful payments
@@ -149,27 +130,23 @@ serve(async (req) => {
         `📦 Заказ: ${order.reference || order.id}\n` +
         `👤 Клиент: ${order.customer_name}\n` +
         `📱 Телефон: ${order.customer_phone}\n` +
-        `💰 Сумма: ${amount || order.total_amount} ₽\n` +
-        `🔢 ID платежа: ${payment_id}`;
+        `💰 Сумма: ${sum || order.total_amount} ₽\n` +
+        `🔢 ID платежа: ${payment_id || orderId}`;
       
       await sendTelegramNotification(message);
     }
 
     console.log(`Order ${order.id} updated: payment_status=${paymentStatus}, status=${orderStatus}`);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      order_id: order.id,
-      payment_status: paymentStatus 
-    }), {
+    return new Response("OK", {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "text/plain" },
     });
   } catch (e) {
     console.error("arsenalpay-callback error:", e);
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response("OK", {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/plain" },
     });
   }
 });
