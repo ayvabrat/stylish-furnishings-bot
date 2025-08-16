@@ -29,7 +29,14 @@ import AdminSettings from "./pages/Admin/Settings";
 import AdminPromotions from "./pages/Admin/Promotions";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (

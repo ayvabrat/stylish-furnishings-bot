@@ -17,10 +17,10 @@ import { createOrder } from '@/services/orderService';
 import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
+  const navigate = useNavigate();
   const { items: cartItems, updateQuantity, removeItem, totalPrice, clearCart } = useCart();
   const { language } = useLanguage();
   const { activePromotion, calculateDiscountedAmount } = usePromotion();
-  const navigate = useNavigate();
 
   // Calculate discount amount
   const discountAmount = calculateDiscountedAmount(totalPrice);
@@ -40,7 +40,8 @@ const Checkout = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  if (cartItems.length === 0) {
+  // Early return if cart is empty
+  if (!cartItems || cartItems.length === 0) {
     return (
       <Layout>
         <div className="bg-white py-16 md:py-24">
@@ -64,14 +65,14 @@ const Checkout = () => {
     );
   }
 
-  const finalPrice = totalPrice - discountAmount;
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
 
   const validateForm = () => {
-    if (!customerName.trim()) {
+    if (!customerName?.trim()) {
       toast.error(language === 'ru' ? 'Введите имя' : 'Атыңызды енгізіңіз');
       return false;
     }
-    if (!customerPhone.trim()) {
+    if (!customerPhone?.trim()) {
       toast.error(language === 'ru' ? 'Введите телефон' : 'Телефонды енгізіңіз');
       return false;
     }
@@ -116,7 +117,6 @@ const Checkout = () => {
       if (error) {
         console.error('ArsenalPay error:', error);
         toast.error(language === 'ru' ? 'Ошибка создания платежа' : 'Төлем жасауда қате');
-        setIsSubmitting(false);
         return;
       }
 
@@ -124,7 +124,6 @@ const Checkout = () => {
       if (!paymentUrl) {
         console.error('No payment URL received:', data);
         toast.error(language === 'ru' ? 'Не получили ссылку на оплату' : 'Төлем сілтемесі алынбады');
-        setIsSubmitting(false);
         return;
       }
 
