@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -76,6 +76,7 @@ export type Database = {
       orders: {
         Row: {
           additional_notes: string | null
+          arsenalpay_payment_id: string | null
           city: string | null
           created_at: string
           customer_email: string | null
@@ -97,6 +98,7 @@ export type Database = {
         }
         Insert: {
           additional_notes?: string | null
+          arsenalpay_payment_id?: string | null
           city?: string | null
           created_at?: string
           customer_email?: string | null
@@ -118,6 +120,7 @@ export type Database = {
         }
         Update: {
           additional_notes?: string | null
+          arsenalpay_payment_id?: string | null
           city?: string | null
           created_at?: string
           customer_email?: string | null
@@ -232,8 +235,8 @@ export type Database = {
     Functions: {
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
