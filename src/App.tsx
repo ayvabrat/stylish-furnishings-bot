@@ -1,66 +1,67 @@
 
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LanguageProvider } from "./contexts/LanguageContext";
-import { CartProvider } from "./contexts/CartContext";
-import { PromotionProvider } from "./contexts/PromotionContext";
-import { AdminProvider } from "./contexts/AdminContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { PromotionProvider } from "@/contexts/PromotionContext";
+import { AdminProvider } from "@/contexts/AdminContext";
+import { AnimatePresence } from "framer-motion";
+
+// Pages
 import Index from "./pages/Index";
-import About from "./pages/About";
 import Catalog from "./pages/Catalog";
 import Product from "./pages/Product";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import About from "./pages/About";
 import Delivery from "./pages/Delivery";
-import PaymentInfo from "./pages/PaymentInfo";
 import Warranty from "./pages/Warranty";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Offer from "./pages/Offer";
 import NotFound from "./pages/NotFound";
+
+// Admin Pages
 import AdminLogin from "./pages/Admin/Login";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminProducts from "./pages/Admin/Products";
-import AdminAddProduct from "./pages/Admin/AddProduct";
-import AdminEditProduct from "./pages/Admin/EditProduct";
-import AdminSettings from "./pages/Admin/Settings";
 import AdminPromotions from "./pages/Admin/Promotions";
+import AdminSettings from "./pages/Admin/Settings";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
+import AddProduct from "./pages/Admin/AddProduct";
+import EditProduct from "./pages/Admin/EditProduct";
+import PayTest from "./pages/PayTest";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <LanguageProvider>
-          <CartProvider>
-            <PromotionProvider>
-              <AdminProvider>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <LanguageProvider>
+        <CartProvider>
+          <PromotionProvider>
+            <AdminProvider>
+              <TooltipProvider>
                 <Toaster />
-                <BrowserRouter>
+                <Sonner position="top-right" />
+                <AnimatePresence mode="wait">
                   <Routes>
                     <Route path="/" element={<Index />} />
-                    <Route path="/about" element={<About />} />
                     <Route path="/catalog" element={<Catalog />} />
-                    <Route path="/product/:id" element={<Product />} />
+                    <Route path="/catalog/:categorySlug" element={<Catalog />} />
+                    <Route path="/product/:productId" element={<Product />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/checkout-success" element={<CheckoutSuccess />} />
+                    <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/delivery" element={<Delivery />} />
-                    <Route path="/payment-info" element={<PaymentInfo />} />
                     <Route path="/warranty" element={<Warranty />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/offer" element={<Offer />} />
+                    <Route path="/pay-test" element={<PayTest />} />
+                    
+                    {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />
                     <Route path="/admin" element={
                       <AdminProtectedRoute>
@@ -74,17 +75,12 @@ function App() {
                     } />
                     <Route path="/admin/products/add" element={
                       <AdminProtectedRoute>
-                        <AdminAddProduct />
+                        <AddProduct />
                       </AdminProtectedRoute>
                     } />
-                    <Route path="/admin/products/edit/:id" element={
+                    <Route path="/admin/products/edit/:productId" element={
                       <AdminProtectedRoute>
-                        <AdminEditProduct />
-                      </AdminProtectedRoute>
-                    } />
-                    <Route path="/admin/settings" element={
-                      <AdminProtectedRoute>
-                        <AdminSettings />
+                        <EditProduct />
                       </AdminProtectedRoute>
                     } />
                     <Route path="/admin/promotions" element={
@@ -92,16 +88,23 @@ function App() {
                         <AdminPromotions />
                       </AdminProtectedRoute>
                     } />
+                    <Route path="/admin/settings" element={
+                      <AdminProtectedRoute>
+                        <AdminSettings />
+                      </AdminProtectedRoute>
+                    } />
+                    
+                    {/* Catch-all route for 404 */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </BrowserRouter>
-              </AdminProvider>
-            </PromotionProvider>
-          </CartProvider>
-        </LanguageProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-}
+                </AnimatePresence>
+              </TooltipProvider>
+            </AdminProvider>
+          </PromotionProvider>
+        </CartProvider>
+      </LanguageProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
+);
 
 export default App;
