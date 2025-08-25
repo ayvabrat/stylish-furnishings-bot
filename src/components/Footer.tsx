@@ -117,6 +117,15 @@ const Footer: React.FC = () => {
                   Telegram
                 </a>
               </li>
+              <li>
+                <a 
+                  href="mailto:nastyakim0309@gmail.com" 
+                  className="text-gray-600 hover:text-kimmy-pink transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  nastyakim0309@gmail.com
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -131,7 +140,7 @@ const Footer: React.FC = () => {
               ИНН: 644308330314
             </p>
             <p className="text-gray-600 text-xs">
-              г. Саратов
+              {language === 'ru' ? 'г. Саратов, Орджоникидзе 44 а, дом 1' : 'Саратов қ., Орджоникидзе 44 а, үй 1'}
             </p>
           </div>
         </div>
