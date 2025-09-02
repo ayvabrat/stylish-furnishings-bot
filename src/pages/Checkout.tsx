@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Minus, Plus, Trash2, CreditCard } from 'lucide-react';
+import { Minus, Plus, Trash2, Upload, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -13,7 +12,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePromotion } from '@/contexts/PromotionContext';
 import PromoCodeInput from '@/components/PromoCodeInput';
-import { createOrder } from '@/services/orderService';
+import { createOrder, uploadReceiptImage } from '@/services/orderService';
 import { fetchAdminSettings } from '@/services/adminService';
 import { AdminSettings } from '@/types/admin';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,9 +34,13 @@ const Checkout = () => {
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('arsenalpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderReference, setOrderReference] = useState<string | null>(null);
+  const [isPaid, setIsPaid] = useState(false);
 
   // Load admin settings for bank transfer info
   useEffect(() => {
@@ -103,7 +106,7 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
-      const { orderId, reference } = await createOrder({
+      const { orderId: newOrderId, reference } = await createOrder({
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim() || undefined,
@@ -112,59 +115,85 @@ const Checkout = () => {
         postalCode: postalCode.trim() || undefined,
         items: cartItems,
         totalAmount: finalPrice,
-        paymentMethod,
+        paymentMethod: 'bank_transfer',
         promotionCode: activePromotion?.code,
         discountAmount,
         additionalNotes: additionalNotes.trim() || undefined,
       });
 
-      console.log('Order created:', { orderId, reference });
-
-      if (paymentMethod === 'arsenalpay') {
-        // Use ArsenalPay
-        const { data, error } = await supabase.functions.invoke('arsenalpay-create', {
-          body: { 
-            orderId, 
-            amount: finalPrice, 
-            description: `Оплата заказа ${reference || orderId}`,
-            customerEmail: customerEmail.trim() || 'guest@example.com'
-          },
-        });
-
-        if (error) {
-          console.error('ArsenalPay error:', error);
-          toast.error(language === 'ru' ? 'Ошибка создания платежа' : 'Төлем жасауда қате');
-          setIsSubmitting(false);
-          return;
-        }
-
-        const paymentUrl = data?.payment_url;
-        if (!paymentUrl) {
-          console.error('No payment URL received:', data);
-          toast.error(language === 'ru' ? 'Не получили ссылку на оплату' : 'Төлем сілтемесі алынбады');
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Clear cart and redirect to payment
-        clearCart();
-        window.location.href = paymentUrl;
-      } else {
-        // Bank transfer - clear cart and show success page
-        clearCart();
-        navigate('/checkout-success', { 
-          state: { 
-            orderId, 
-            reference, 
-            paymentMethod 
-          } 
-        });
-      }
+      console.log('Order created:', { orderId: newOrderId, reference });
+      
+      setOrderId(newOrderId);
+      setOrderReference(reference);
+      
+      toast.success(language === 'ru' 
+        ? 'Заказ создан! Загрузите чек об оплате и нажмите "Я оплатил"' 
+        : 'Тапсырыс жасалды! Төлем чегін жүктеп, "Мен төледім" дегенді басыңыз');
+        
+      // Clear cart after successful order creation
+      clearCart();
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error(language === 'ru' ? 'Ошибка при оформлении заказа' : 'Тапсырыс беруде қате');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setReceiptFile(file);
+      const url = URL.createObjectURL(file);
+      setReceiptUrl(url);
+    }
+  };
+
+  const handlePaymentConfirm = async () => {
+    if (!receiptFile || !orderId) {
+      toast.error(language === 'ru' ? 'Загрузите чек об оплате' : 'Төлем чегін жүктеңіз');
+      return;
+    }
+
+    setIsPaid(true);
+    
+    try {
+      // Upload receipt
+      const { success, error } = await uploadReceiptImage(orderId, receiptFile);
+      
+      if (!success) {
+        console.error('Receipt upload error:', error);
+        toast.error(language === 'ru' ? 'Ошибка загрузки чека' : 'Чек жүктеуде қате');
+        setIsPaid(false);
+        return;
+      }
+
+      // Send notification to Telegram
+      const { error: telegramError } = await supabase.functions.invoke('send-order-notification', {
+        body: { orderId }
+      });
+
+      if (telegramError) {
+        console.error('Telegram notification error:', telegramError);
+        // Don't fail the entire process if Telegram fails
+      }
+
+      toast.success(language === 'ru' 
+        ? 'Спасибо! Ваш заказ отправлен на обработку' 
+        : 'Рахмет! Сіздің тапсырысыңыз өңдеуге жіберілді');
+        
+      // Navigate to success page
+      navigate('/checkout-success', { 
+        state: { 
+          orderId, 
+          reference: orderReference, 
+          paymentMethod: 'bank_transfer' 
+        } 
+      });
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      toast.error(language === 'ru' ? 'Ошибка подтверждения оплаты' : 'Төлемді растауда қате');
+      setIsPaid(false);
     }
   };
 
@@ -365,70 +394,116 @@ const Checkout = () => {
                     {language === 'ru' ? 'Способ оплаты' : 'Төлем әдісі'}
                   </h2>
                   
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                      <RadioGroupItem value="arsenalpay" id="arsenalpay" />
-                      <Label htmlFor="arsenalpay" className="flex items-center gap-2">
-                        <CreditCard size={20} />
-                        {language === 'ru' ? 'Банковская карта' : 'Банк картасы'}
-                      </Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                      <RadioGroupItem value="bank_transfer" id="bank-transfer" />
-                      <Label htmlFor="bank-transfer" className="flex items-center gap-2">
-                        <CreditCard size={20} />
+                  <div className="p-4 border rounded-lg bg-blue-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Check className="text-green-600" size={20} />
+                      <Label className="font-medium">
                         {language === 'ru' ? 'Банковский перевод' : 'Банктік аударым'}
                       </Label>
                     </div>
-                  </RadioGroup>
-
-                  {/* Payment Security Information */}
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-semibold mb-2">
-                      {language === 'ru' ? 'Безопасность платежей' : 'Төлем қауіпсіздігі'}
-                    </h3>
-                    <div className="text-sm space-y-2">
-                      <p>
-                        {language === 'ru' 
-                          ? 'Все платежи обрабатываются через защищенное соединение с использованием технологии шифрования SSL. Данные вашей карты передаются в зашифрованном виде и не сохраняются на нашем сервере.'
-                          : 'Барлық төлемдер SSL шифрлау технологиясын пайдалана отырып қорғалған байланыс арқылы өңделеді. Сіздің карта деректеріңіз шифрланған түрде беріледі және біздің серверде сақталмайды.'
-                        }
-                      </p>
-                      <p>
-                        {language === 'ru' 
-                          ? 'Мы принимаем к оплате банковские карты международных платежных систем Visa, MasterCard и МИР.'
-                          : 'Біз Visa, MasterCard және МИР халықаралық төлем жүйелерінің банк карталарын қабылдаймыз.'
-                        }
-                      </p>
-                    </div>
-                  </div>
-
-                  {paymentMethod === 'bank_transfer' && adminSettings && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <h3 className="font-semibold mb-2">
-                        {language === 'ru' ? 'Реквизиты для перевода:' : 'Аударым деректемелері:'}
-                      </h3>
-                      <div className="text-sm space-y-1">
+                    
+                    {adminSettings && (
+                      <div className="text-sm space-y-2">
+                        <h3 className="font-semibold mb-2">
+                          {language === 'ru' ? 'Реквизиты для перевода:' : 'Аударым деректемелері:'}
+                        </h3>
                         <p><strong>{language === 'ru' ? 'Банк:' : 'Банк:'}</strong> {adminSettings.paymentDetails.bankName}</p>
                         <p><strong>{language === 'ru' ? 'Номер карты:' : 'Карта нөмірі:'}</strong> {adminSettings.paymentDetails.accountNumber}</p>
                         <p><strong>{language === 'ru' ? 'Получатель:' : 'Алушы:'}</strong> {adminSettings.paymentDetails.recipientName}</p>
-                        <p><strong>{language === 'ru' ? 'Сумма:' : 'Сома:'}</strong> {finalPrice} ₽</p>
+                        <p><strong>{language === 'ru' ? 'Сумма к оплате:' : 'Төлем сомасы:'}</strong> {finalPrice} ₽</p>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting 
-                    ? (language === 'ru' ? 'Оформление...' : 'Рәсімдеу...') 
-                    : (language === 'ru' ? 'Оформить заказ' : 'Тапсырыс беру')
-                  }
-                </Button>
+                {!orderId ? (
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting 
+                      ? (language === 'ru' ? 'Оформление...' : 'Рәсімдеу...') 
+                      : (language === 'ru' ? 'Оформить заказ' : 'Тапсырыс беру')
+                    }
+                  </Button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-green-800">
+                        {language === 'ru' 
+                          ? `Заказ №${orderReference} создан!` 
+                          : `Тапсырыс №${orderReference} жасалды!`
+                        }
+                      </h3>
+                      <p className="text-sm text-green-700">
+                        {language === 'ru' 
+                          ? 'Переведите указанную сумму на реквизиты выше, загрузите скриншот чека и нажмите "Я оплатил"' 
+                          : 'Жоғарыда көрсетілген деректемелерге сомасын аударып, чек скриншотын жүктеп, "Мен төледім" дегенді басыңыз'
+                        }
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="receipt-upload" className="block mb-2">
+                        {language === 'ru' ? 'Загрузить чек об оплате *' : 'Төлем чегін жүктеу *'}
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <input
+                          id="receipt-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleReceiptUpload}
+                          className="hidden"
+                        />
+                        {receiptUrl ? (
+                          <div className="space-y-3">
+                            <img 
+                              src={receiptUrl} 
+                              alt="Receipt" 
+                              className="max-h-32 mx-auto rounded border"
+                            />
+                            <Button 
+                              type="button"
+                              variant="outline" 
+                              onClick={() => document.getElementById('receipt-upload')?.click()}
+                            >
+                              {language === 'ru' ? 'Изменить файл' : 'Файлды өзгерту'}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div 
+                            className="cursor-pointer"
+                            onClick={() => document.getElementById('receipt-upload')?.click()}
+                          >
+                            <Upload size={48} className="mx-auto mb-4 text-gray-400" />
+                            <p className="text-gray-600">
+                              {language === 'ru' 
+                                ? 'Нажмите для загрузки скриншота чека' 
+                                : 'Чек скриншотын жүктеу үшін басыңыз'
+                              }
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              {language === 'ru' ? 'Поддерживаются: JPG, PNG' : 'Қолдау көрсетіледі: JPG, PNG'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="button"
+                      onClick={handlePaymentConfirm}
+                      className="w-full"
+                      disabled={!receiptFile || isPaid}
+                    >
+                      {isPaid 
+                        ? (language === 'ru' ? 'Обработка...' : 'Өңдеу...') 
+                        : (language === 'ru' ? 'Я оплатил' : 'Мен төледім')
+                      }
+                    </Button>
+                  </div>
+                )}
               </form>
             </div>
           </motion.div>
