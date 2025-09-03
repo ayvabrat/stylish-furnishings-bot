@@ -7,9 +7,9 @@ import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/utils';
 // Default settings
 const defaultSettings: AdminSettings = {
   paymentDetails: {
-    bankName: 'HALYK BANK',
-    accountNumber: '4146 2130 0468 9747',
-    recipientName: 'ANDREY SHALNEV'
+    bankName: 'Сбер',
+    accountNumber: '2202208115189566',
+    recipientName: 'Ким Анастасия Алексеевна'
   },
   contactInfo: {
     phone: '+7 777 123 4567',
