@@ -29,6 +29,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
+  // Debug logging
+  console.log('PaymentModal props:', {
+    isOpen,
+    adminSettings: !!adminSettings,
+    finalPrice,
+    orderReference
+  });
+
   const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -51,17 +59,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const handleConfirmPayment = async () => {
+    console.log('Payment confirmation button clicked');
+    
     if (!receiptFile) {
+      console.log('No receipt file selected');
       toast.error(language === 'ru' ? 'Пожалуйста, загрузите чек об оплате' : 'Төлем чегін жүктеңіз');
       return;
     }
 
+    console.log('Receipt file found, processing payment confirmation...');
     setIsConfirming(true);
     try {
       await onPaymentConfirm(receiptFile);
+      console.log('Payment confirmed successfully');
       onClose();
     } catch (error) {
       console.error('Error confirming payment:', error);
+      toast.error(language === 'ru' ? 'Ошибка подтверждения оплаты' : 'Төлемді растауда қате');
     } finally {
       setIsConfirming(false);
     }

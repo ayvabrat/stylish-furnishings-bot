@@ -85,9 +85,14 @@ export const createOrder = async (orderData: {
 // Function to upload receipt image for an order
 export const uploadReceiptImage = async (orderId: string, file: File): Promise<{ success: boolean; error?: string }> => {
   try {
+    console.log('Starting receipt upload for order:', orderId);
+    console.log('File details:', { name: file.name, size: file.size, type: file.type });
+    
     // Generate a unique file name
     const fileName = `${orderId}-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
     const filePath = `receipts/${fileName}`;
+    
+    console.log('Uploading to path:', filePath);
     
     // Upload the file to storage
     const { error: uploadError } = await supabase.storage
@@ -99,10 +104,14 @@ export const uploadReceiptImage = async (orderId: string, file: File): Promise<{
       return { success: false, error: uploadError.message };
     }
     
+    console.log('File uploaded successfully, getting public URL...');
+    
     // Get the public URL
     const { data: urlData } = supabase.storage
       .from('order_receipts')
       .getPublicUrl(filePath);
+    
+    console.log('Public URL:', urlData.publicUrl);
     
     // Update the order with the receipt URL
     const { error: updateError } = await supabase
@@ -115,8 +124,9 @@ export const uploadReceiptImage = async (orderId: string, file: File): Promise<{
       return { success: false, error: updateError.message };
     }
     
+    console.log('Order updated with receipt URL successfully');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in uploadReceiptImage:', error);
     return { success: false, error: error.message };
   }

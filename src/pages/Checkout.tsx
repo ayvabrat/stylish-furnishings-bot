@@ -56,6 +56,11 @@ const Checkout = () => {
     loadSettings();
   }, []);
 
+  // Debug effect for showPaymentModal
+  useEffect(() => {
+    console.log('showPaymentModal state changed:', showPaymentModal);
+  }, [showPaymentModal]);
+
   // Scroll to top on component mount
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -102,8 +107,14 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    console.log('Form submitted, validating...');
     
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
+    
+    console.log('Form validation passed, creating order...');
     setIsSubmitting(true);
     
     try {
@@ -122,7 +133,7 @@ const Checkout = () => {
         additionalNotes: additionalNotes.trim() || undefined,
       });
 
-      console.log('Order created:', { orderId: newOrderId, reference });
+      console.log('Order created successfully:', { orderId: newOrderId, reference });
       
       setOrderId(newOrderId);
       setOrderReference(reference);
@@ -130,6 +141,7 @@ const Checkout = () => {
       // Clear cart after successful order creation
       clearCart();
       
+      console.log('Opening payment modal...');
       // Show payment modal
       setShowPaymentModal(true);
       
@@ -146,12 +158,16 @@ const Checkout = () => {
   };
 
   const handlePaymentConfirm = async (receiptFile: File) => {
+    console.log('Payment confirmation started with file:', receiptFile.name);
+    
     if (!orderId) {
+      console.error('No order ID found');
       toast.error(language === 'ru' ? 'Ошибка: заказ не найден' : 'Қате: тапсырыс табылмады');
       return;
     }
     
     try {
+      console.log('Uploading receipt for order:', orderId);
       // Upload receipt
       const { success, error } = await uploadReceiptImage(orderId, receiptFile);
       
@@ -161,6 +177,7 @@ const Checkout = () => {
         return;
       }
 
+      console.log('Receipt uploaded successfully, updating order status...');
       // Update order status to completed
       const { error: updateError } = await supabase
         .from('orders')
@@ -171,8 +188,11 @@ const Checkout = () => {
 
       if (updateError) {
         console.error('Error updating order status:', updateError);
+      } else {
+        console.log('Order status updated to completed');
       }
 
+      console.log('Sending Telegram notification...');
       // Send notification to Telegram
       const { error: telegramError } = await supabase.functions.invoke('send-order-notification', {
         body: { orderId }
@@ -182,12 +202,15 @@ const Checkout = () => {
         console.error('Telegram notification error:', telegramError);
         // Don't fail the entire process if Telegram fails
         toast.error(language === 'ru' ? 'Ошибка отправки уведомления' : 'Хабарлама жіберуде қате');
+      } else {
+        console.log('Telegram notification sent successfully');
       }
 
       toast.success(language === 'ru' 
         ? 'Спасибо! Ваш заказ отправлен на обработку' 
         : 'Рахмет! Сіздің тапсырысыңыз өңдеуге жіберілді');
         
+      console.log('Navigating to success page...');
       // Navigate to success page
       navigate('/checkout-success', { 
         state: { 
@@ -440,7 +463,10 @@ const Checkout = () => {
           {/* Payment Modal */}
           <PaymentModal
             isOpen={showPaymentModal}
-            onClose={() => setShowPaymentModal(false)}
+            onClose={() => {
+              console.log('PaymentModal close requested');
+              setShowPaymentModal(false);
+            }}
             onPaymentConfirm={handlePaymentConfirm}
             adminSettings={adminSettings}
             finalPrice={finalPrice}
