@@ -23,7 +23,7 @@ export const createOrder = async (orderData: {
   promotionCode?: string;
   discountAmount?: number;
   additionalNotes?: string;
-}): Promise<{ orderId: string; reference: string; paymentDetails: any }> => {
+}): Promise<{ orderId: string; reference: string }> => {
   try {
     // Generate a unique order ID
     const orderId = crypto.randomUUID();
@@ -48,6 +48,7 @@ export const createOrder = async (orderData: {
         promotion_code: orderData.promotionCode,
         discount_amount: orderData.discountAmount,
         additional_notes: orderData.additionalNotes,
+        payment_status: 'pending'
       });
 
     if (orderError) {
@@ -73,21 +74,8 @@ export const createOrder = async (orderData: {
       console.error('Error creating order items:', orderItemsError);
       throw new Error('Failed to create order items');
     }
-    
-    // Fetch payment details from admin settings
-    const { data: settingsData } = await supabase
-      .from('settings')
-      .select('*')
-      .in('key', ['payment_recipient_name', 'payment_account_number', 'payment_bank_name']);
-    
-    const paymentDetails = {
-      recipient: settingsData?.find(s => s.key === 'payment_recipient_name')?.value || '',
-      bankAccount: settingsData?.find(s => s.key === 'payment_account_number')?.value || '',
-      bankName: settingsData?.find(s => s.key === 'payment_bank_name')?.value || '',
-      amount: orderData.totalAmount
-    };
 
-    return { orderId, reference, paymentDetails };
+    return { orderId, reference };
   } catch (error) {
     console.error('Error in createOrder:', error);
     throw error;

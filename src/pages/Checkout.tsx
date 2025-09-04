@@ -161,6 +161,18 @@ const Checkout = () => {
         return;
       }
 
+      // Update order status to completed
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ 
+          payment_status: 'completed' 
+        })
+        .eq('id', orderId);
+
+      if (updateError) {
+        console.error('Error updating order status:', updateError);
+      }
+
       // Send notification to Telegram
       const { error: telegramError } = await supabase.functions.invoke('send-order-notification', {
         body: { orderId }
