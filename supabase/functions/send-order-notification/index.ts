@@ -124,22 +124,30 @@ ${order.additional_notes ? `📝 Дополнительные заметки: ${
 
     // If there's a receipt, send it as a photo
     if (order.receipt_url) {
+      console.log('Sending receipt photo:', order.receipt_url);
       const photoUrl = `https://api.telegram.org/bot${telegramBotToken}/sendPhoto`;
       
-      const photoResponse = await fetch(photoUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: adminChatId,
-          photo: order.receipt_url,
-          caption: `📄 Чек для заказа #${order.reference}`,
-        }),
-      });
+      try {
+        const photoResponse = await fetch(photoUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: adminChatId,
+            photo: order.receipt_url,
+            caption: `📄 Чек для заказа #${order.reference}`,
+          }),
+        });
 
-      if (!photoResponse.ok) {
-        console.error('Failed to send receipt photo to Telegram');
+        if (!photoResponse.ok) {
+          const errorText = await photoResponse.text();
+          console.error('Failed to send receipt photo to Telegram:', errorText);
+        } else {
+          console.log('Receipt photo sent successfully to Telegram');
+        }
+      } catch (photoError: any) {
+        console.error('Error sending receipt photo:', photoError.message);
       }
     }
 
