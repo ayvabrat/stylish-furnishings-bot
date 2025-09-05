@@ -212,7 +212,7 @@ const Checkout = () => {
         
       console.log('Navigating to success page...');
       // Navigate to success page
-      navigate('/checkout-success', { 
+      navigate('/checkout/success', { 
         state: { 
           orderId, 
           reference: orderReference, 
