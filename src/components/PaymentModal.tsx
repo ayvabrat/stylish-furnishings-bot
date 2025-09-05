@@ -78,9 +78,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const sendToTelegram = async (receiptFile: File) => {
+    console.log('🚀 Начинаем отправку в Telegram...');
+    
     if (!customerData || !cartItems) {
+      console.error('❌ Отсутствуют данные клиента или товары');
       throw new Error('Customer data or cart items missing');
     }
+
+    console.log('✅ Данные клиента и товары найдены');
+    console.log('📦 Товары:', cartItems);
+    console.log('👤 Данные клиента:', customerData);
 
     const telegramData = new FormData();
     telegramData.append('chat_id', '67486304');
@@ -111,36 +118,66 @@ ${orderDetails}
 
 📄 Чек об оплате прикреплен к сообщению.`;
 
+    console.log('📝 Сообщение для отправки:', message);
     telegramData.append('caption', message);
 
-    await axios.post(
-      `https://api.telegram.org/bot7789884902:AAHTbhX_tJvPDwPMIhmseXppabXRSHzkTFM/sendPhoto`,
-      telegramData
-    );
+    console.log('📤 Отправляем запрос в Telegram API...');
+    try {
+      const response = await axios.post(
+        `https://api.telegram.org/bot7789884902:AAHTbhX_tJvPDwPMIhmseXppabXRSHzkTFM/sendPhoto`,
+        telegramData
+      );
+      console.log('✅ Успешно отправлено в Telegram:', response.data);
+    } catch (error) {
+      console.error('❌ Ошибка отправки в Telegram:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('📋 Детали ошибки:', error.response?.data);
+        console.error('🔢 Статус код:', error.response?.status);
+        console.error('📊 Headers:', error.response?.headers);
+      }
+      throw error;
+    }
   };
 
   const handleConfirmPayment = async () => {
-    console.log('Payment confirmation button clicked');
+    console.log('🚀 Кнопка подтверждения оплаты нажата');
     
     if (!receiptFile) {
-      console.log('No receipt file selected');
+      console.log('❌ Файл чека не выбран');
       toast.error(language === 'ru' ? 'Пожалуйста, загрузите чек об оплате' : 'Төлем чегін жүктеңіз');
       return;
     }
 
-    console.log('Receipt file found, processing payment confirmation...');
+    console.log('✅ Файл чека найден, начинаем процесс подтверждения оплаты...');
+    console.log('📄 Информация о файле:', {
+      name: receiptFile.name,
+      size: receiptFile.size,
+      type: receiptFile.type
+    });
+    
     setIsConfirming(true);
     try {
       // Send to Telegram first
+      console.log('📤 Шаг 1: Отправка в Telegram...');
       await sendToTelegram(receiptFile);
-      console.log('Data sent to Telegram successfully');
+      console.log('✅ Шаг 1 завершен: Данные отправлены в Telegram');
       
       // Then proceed with original payment confirmation
+      console.log('💾 Шаг 2: Подтверждение оплаты в системе...');
       await onPaymentConfirm(receiptFile);
-      console.log('Payment confirmed successfully');
+      console.log('✅ Шаг 2 завершен: Оплата подтверждена в системе');
+      
+      console.log('🎉 Процесс подтверждения оплаты успешно завершен');
       onClose();
     } catch (error) {
-      console.error('Error confirming payment:', error);
+      console.error('❌ Ошибка при подтверждении оплаты:', error);
+      
+      // Более детальное логирование ошибки
+      if (error instanceof Error) {
+        console.error('📋 Сообщение об ошибке:', error.message);
+        console.error('🔍 Stack trace:', error.stack);
+      }
+      
       toast.error(language === 'ru' ? 'Ошибка подтверждения оплаты' : 'Төлемді растауда қате');
     } finally {
       setIsConfirming(false);
