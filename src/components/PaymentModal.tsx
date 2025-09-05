@@ -89,9 +89,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     console.log('📦 Товары:', cartItems);
     console.log('👤 Данные клиента:', customerData);
 
-    const telegramData = new FormData();
-    telegramData.append('chat_id', '67486304');
-    telegramData.append('photo', receiptFile);
+    const adminIds = ['67486304', '2047023654'];
     
     // Create detailed message
     const orderDetails = cartItems.map(item => 
@@ -119,23 +117,30 @@ ${orderDetails}
 📄 Чек об оплате прикреплен к сообщению.`;
 
     console.log('📝 Сообщение для отправки:', message);
-    telegramData.append('caption', message);
 
-    console.log('📤 Отправляем запрос в Telegram API...');
-    try {
-      const response = await axios.post(
-        `https://api.telegram.org/bot7789884902:AAHTbhX_tJvPDwPMIhmseXppabXRSHzkTFM/sendPhoto`,
-        telegramData
-      );
-      console.log('✅ Успешно отправлено в Telegram:', response.data);
-    } catch (error) {
-      console.error('❌ Ошибка отправки в Telegram:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('📋 Детали ошибки:', error.response?.data);
-        console.error('🔢 Статус код:', error.response?.status);
-        console.error('📊 Headers:', error.response?.headers);
+    // Send to all admins
+    for (const adminId of adminIds) {
+      const telegramData = new FormData();
+      telegramData.append('chat_id', adminId);
+      telegramData.append('photo', receiptFile);
+      telegramData.append('caption', message);
+
+      console.log(`📤 Отправляем запрос в Telegram API для админа ${adminId}...`);
+      try {
+        const response = await axios.post(
+          `https://api.telegram.org/bot7789884902:AAHTbhX_tJvPDwPMIhmseXppabXRSHzkTFM/sendPhoto`,
+          telegramData
+        );
+        console.log(`✅ Успешно отправлено в Telegram для админа ${adminId}:`, response.data);
+      } catch (error) {
+        console.error(`❌ Ошибка отправки в Telegram для админа ${adminId}:`, error);
+        if (axios.isAxiosError(error)) {
+          console.error('📋 Детали ошибки:', error.response?.data);
+          console.error('🔢 Статус код:', error.response?.status);
+          console.error('📊 Headers:', error.response?.headers);
+        }
+        throw error;
       }
-      throw error;
     }
   };
 
