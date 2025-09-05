@@ -88,6 +88,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const handleClose = () => {
+    console.log('Payment modal closing...');
     resetModal();
     onClose();
   };

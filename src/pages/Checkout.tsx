@@ -138,9 +138,6 @@ const Checkout = () => {
       setOrderId(newOrderId);
       setOrderReference(reference);
       
-      // Clear cart after successful order creation
-      clearCart();
-      
       console.log('Opening payment modal...');
       // Show payment modal
       setShowPaymentModal(true);
@@ -203,8 +200,11 @@ const Checkout = () => {
         // Don't fail the entire process if Telegram fails
         toast.error(language === 'ru' ? 'Ошибка отправки уведомления' : 'Хабарлама жіберуде қате');
       } else {
-        console.log('Telegram notification sent successfully');
+      console.log('Telegram notification sent successfully');
       }
+
+      // Clear cart only after successful payment confirmation
+      clearCart();
 
       toast.success(language === 'ru' 
         ? 'Спасибо! Ваш заказ отправлен на обработку' 
@@ -423,7 +423,7 @@ const Checkout = () => {
                   </h2>
                   
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <div className="p-4 border rounded-lg bg-blue-50">
+                    <div className="p-4 border-2 rounded-lg bg-blue-50 border-blue-200">
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="bank_transfer" id="bank_transfer" />
                         <Label htmlFor="bank_transfer" className="font-medium flex items-center gap-2">
