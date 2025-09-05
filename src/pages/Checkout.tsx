@@ -216,7 +216,9 @@ const Checkout = () => {
         state: { 
           orderId, 
           reference: orderReference, 
-          paymentMethod 
+          paymentMethod,
+          paymentDetails: adminSettings?.paymentDetails,
+          finalPrice
         } 
       });
     } catch (error) {

@@ -115,12 +115,12 @@ const CheckoutSuccess = () => {
                         <span className="text-sm text-gray-600">
                           {language === 'ru' ? 'Номер карты:' : 'Карта нөмірі:'}
                         </span>
-                        <p className="font-medium">{state.paymentDetails.bankAccount}</p>
+                        <p className="font-medium">{state.paymentDetails.accountNumber}</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(state.paymentDetails.bankAccount)}
+                        onClick={() => copyToClipboard(state.paymentDetails.accountNumber)}
                       >
                         <Copy size={16} />
                       </Button>
@@ -131,12 +131,12 @@ const CheckoutSuccess = () => {
                         <span className="text-sm text-gray-600">
                           {language === 'ru' ? 'Получатель:' : 'Алушы:'}
                         </span>
-                        <p className="font-medium">{state.paymentDetails.recipient}</p>
+                        <p className="font-medium">{state.paymentDetails.recipientName}</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(state.paymentDetails.recipient)}
+                        onClick={() => copyToClipboard(state.paymentDetails.recipientName)}
                       >
                         <Copy size={16} />
                       </Button>
@@ -147,12 +147,12 @@ const CheckoutSuccess = () => {
                         <span className="text-sm text-green-700">
                           {language === 'ru' ? 'Сумма к оплате:' : 'Төленетін сома:'}
                         </span>
-                        <p className="font-bold text-green-800 text-lg">{state.paymentDetails.amount} ₽</p>
+                        <p className="font-bold text-green-800 text-lg">{state.finalPrice} ₽</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(state.paymentDetails.amount.toString())}
+                        onClick={() => copyToClipboard(state.finalPrice.toString())}
                       >
                         <Copy size={16} />
                       </Button>

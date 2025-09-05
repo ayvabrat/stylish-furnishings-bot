@@ -9,7 +9,7 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
-const adminChatId = '67486304';
+const adminChatId = '67486304'; // Make sure this is correct
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -38,6 +38,8 @@ serve(async (req) => {
     }
 
     console.log('Processing order notification for order ID:', orderId);
+    console.log('Telegram bot token exists:', !!telegramBotToken);
+    console.log('Admin chat ID:', adminChatId);
 
     // Fetch order details
     const { data: order, error: orderError } = await supabase
@@ -68,7 +70,7 @@ serve(async (req) => {
       });
     }
 
-    // Format order message
+    // Format order message - use plain text instead of HTML to avoid parsing issues
     const itemsList = orderItems?.map((item, index) => 
       `${index + 1}. ${item.product_name} - ${item.quantity} шт. × ${item.price}₽ = ${(item.quantity * item.price)}₽`
     ).join('\n') || 'Нет товаров';
@@ -99,7 +101,11 @@ ${order.additional_notes ? `📝 Дополнительные заметки: ${
 🕐 Дата заказа: ${new Date(order.created_at).toLocaleString('ru-RU')}`;
 
     // Send message to Telegram
+    console.log('Sending message to Telegram...');
     const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+    
+    console.log('Telegram URL (without token):', telegramUrl.replace(telegramBotToken, '[TOKEN]'));
+    console.log('Message length:', message.length);
     
     const telegramResponse = await fetch(telegramUrl, {
       method: 'POST',
@@ -109,14 +115,16 @@ ${order.additional_notes ? `📝 Дополнительные заметки: ${
       body: JSON.stringify({
         chat_id: adminChatId,
         text: message,
-        parse_mode: 'HTML',
       }),
     });
 
+    console.log('Telegram response status:', telegramResponse.status);
+    
     if (!telegramResponse.ok) {
       const errorText = await telegramResponse.text();
       console.error('Telegram API error:', errorText);
-      return new Response(JSON.stringify({ error: 'Failed to send Telegram message' }), {
+      console.error('Response status:', telegramResponse.status);
+      return new Response(JSON.stringify({ error: 'Failed to send Telegram message', details: errorText }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -151,7 +159,7 @@ ${order.additional_notes ? `📝 Дополнительные заметки: ${
       }
     }
 
-    console.log('Order notification sent successfully to Telegram');
+    console.log('Main message sent successfully to Telegram');
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
