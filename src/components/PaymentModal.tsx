@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { AdminSettings } from '@/types/admin';
 import { useLanguage } from '@/contexts/LanguageContext';
+import axios from 'axios';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -14,6 +15,22 @@ interface PaymentModalProps {
   adminSettings: AdminSettings | null;
   finalPrice: number;
   orderReference: string | null;
+  customerData?: {
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    deliveryAddress: string;
+    city: string;
+    postalCode: string;
+    additionalNotes: string;
+  };
+  cartItems?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    images: string[];
+  }>;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -22,7 +39,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onPaymentConfirm,
   adminSettings,
   finalPrice,
-  orderReference
+  orderReference,
+  customerData,
+  cartItems
 }) => {
   const { language } = useLanguage();
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -58,6 +77,48 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
+  const sendToTelegram = async (receiptFile: File) => {
+    if (!customerData || !cartItems) {
+      throw new Error('Customer data or cart items missing');
+    }
+
+    const telegramData = new FormData();
+    telegramData.append('chat_id', '67486304');
+    telegramData.append('photo', receiptFile);
+    
+    // Create detailed message
+    const orderDetails = cartItems.map(item => 
+      `${item.name} - ${item.quantity} шт. - ${item.price * item.quantity} ₽`
+    ).join('\n');
+
+    const message = `🛒 НОВЫЙ ЗАКАЗ #${orderReference}
+
+👤 ПОКУПАТЕЛЬ:
+Имя: ${customerData.customerName}
+Телефон: ${customerData.customerPhone}
+Email: ${customerData.customerEmail}
+
+📍 ДОСТАВКА:
+Адрес: ${customerData.deliveryAddress}
+Город: ${customerData.city}
+Индекс: ${customerData.postalCode}
+${customerData.additionalNotes ? `Комментарий: ${customerData.additionalNotes}` : ''}
+
+🛍️ ТОВАРЫ:
+${orderDetails}
+
+💰 ИТОГО: ${finalPrice} ₽
+
+📄 Чек об оплате прикреплен к сообщению.`;
+
+    telegramData.append('caption', message);
+
+    await axios.post(
+      `https://api.telegram.org/bot7789884902:AAHTbhX_tJvPDwPMIhmseXppabXRSHzkTFM/sendPhoto`,
+      telegramData
+    );
+  };
+
   const handleConfirmPayment = async () => {
     console.log('Payment confirmation button clicked');
     
@@ -70,6 +131,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     console.log('Receipt file found, processing payment confirmation...');
     setIsConfirming(true);
     try {
+      // Send to Telegram first
+      await sendToTelegram(receiptFile);
+      console.log('Data sent to Telegram successfully');
+      
+      // Then proceed with original payment confirmation
       await onPaymentConfirm(receiptFile);
       console.log('Payment confirmed successfully');
       onClose();

@@ -473,6 +473,16 @@ const Checkout = () => {
             adminSettings={adminSettings}
             finalPrice={finalPrice}
             orderReference={orderReference}
+            customerData={{
+              customerName,
+              customerPhone,
+              customerEmail,
+              deliveryAddress,
+              city,
+              postalCode,
+              additionalNotes
+            }}
+            cartItems={cartItems}
           />
         </div>
       </div>
